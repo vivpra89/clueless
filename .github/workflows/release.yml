@@ -1,0 +1,202 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/release.yml'
+
+jobs:
+  build:
+    name: Build macOS App
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, mbstring, pdo
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep "'version' =>" config/nativephp.php | sed -E "s/.*'([0-9]+\.[0-9]+\.[0-9]+)'.*/\1/")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Copy .env file
+        run: cp .env.example .env
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Generate Ziggy routes
+        run: php artisan ziggy:generate
+
+      - name: Build Swift audio capture
+        run: |
+          chmod +x build-swift-audio.sh
+          ./build-swift-audio.sh
+
+      - name: Install Electron dependencies
+        working-directory: vendor/nativephp/electron/resources/js
+        run: npm install
+
+      # Import certificates for code signing (when available)
+      - name: Import Code Signing Certificate
+        if: env.NATIVEPHP_CERTIFICATE_BASE64 != ''
+        env:
+          NATIVEPHP_CERTIFICATE_BASE64: ${{ secrets.NATIVEPHP_CERTIFICATE_BASE64 }}
+          NATIVEPHP_CERTIFICATE_PASSWORD: ${{ secrets.NATIVEPHP_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create a temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          
+          # Decode certificate
+          echo "$NATIVEPHP_CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          
+          # Create keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          
+          # Import certificate
+          security import certificate.p12 -P "$NATIVEPHP_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          
+          # Clean up
+          rm certificate.p12
+
+      - name: Build NativePHP application
+        env:
+          NATIVEPHP_APPLE_ID: ${{ secrets.NATIVEPHP_APPLE_ID }}
+          NATIVEPHP_APPLE_ID_PASS: ${{ secrets.NATIVEPHP_APPLE_ID_PASS }}
+          NATIVEPHP_APPLE_TEAM_ID: ${{ secrets.NATIVEPHP_APPLE_TEAM_ID }}
+          NATIVEPHP_APP_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          # Set architecture-specific build
+          if [ "${{ matrix.arch }}" == "x64" ]; then
+            export NATIVEPHP_ARCH="--x64"
+          else
+            export NATIVEPHP_ARCH="--arm64"
+          fi
+          
+          # Build the app
+          php artisan native:build mac $NATIVEPHP_ARCH
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Clueless-${{ steps.version.outputs.VERSION }}-${{ matrix.arch }}
+          path: dist/*.dmg
+          retention-days: 5
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep "'version' =>" config/nativephp.php | sed -E "s/.*'([0-9]+\.[0-9]+\.[0-9]+)'.*/\1/")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download x64 artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Clueless-${{ steps.version.outputs.VERSION }}-x64
+          path: ./artifacts/x64
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Clueless-${{ steps.version.outputs.VERSION }}-arm64
+          path: ./artifacts/arm64
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          release_name: Clueless v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## 🎉 Clueless v${{ steps.version.outputs.VERSION }}
+            
+            ### Downloads
+            - 🖥️ **macOS (Apple Silicon)**: `Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg`
+            - 🖥️ **macOS (Intel)**: `Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg`
+            
+            ### Installation
+            1. Download the appropriate DMG file for your Mac
+            2. Open the DMG file
+            3. Drag Clueless to your Applications folder
+            4. Launch Clueless from Applications
+            
+            ### What's New
+            See [commits](https://github.com/${{ github.repository }}/commits/v${{ steps.version.outputs.VERSION }}) for details.
+          draft: true
+          prerelease: false
+
+      - name: Upload x64 DMG
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/x64/Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg
+          asset_name: Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg
+          asset_content_type: application/x-apple-diskimage
+
+      - name: Upload arm64 DMG
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/arm64/Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg
+          asset_name: Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg
+          asset_content_type: application/x-apple-diskimage
