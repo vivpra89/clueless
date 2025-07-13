@@ -21,7 +21,7 @@ class EnsureOnboardingCompleted
         }
 
         // Check if user has completed onboarding
-        if ($request->user() && ! $request->user()->has_completed_onboarding) {
+        if ($request->user() && $request->user()->has_completed_onboarding !== true) {
             return redirect()->route('onboarding.show');
         }
 
