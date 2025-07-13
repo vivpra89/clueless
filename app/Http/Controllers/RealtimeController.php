@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ApiKeyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class RealtimeController extends Controller
 {
+    private ApiKeyService $apiKeyService;
+
+    public function __construct(ApiKeyService $apiKeyService)
+    {
+        $this->apiKeyService = $apiKeyService;
+    }
+
     /**
      * Create a relay connection to OpenAI Realtime API
      * This will return WebSocket connection details for the frontend
@@ -14,7 +22,14 @@ class RealtimeController extends Controller
     public function createSession(Request $request)
     {
         try {
-            $apiKey = config('openai.api_key');
+            $apiKey = $this->apiKeyService->getApiKey();
+            
+            if (!$apiKey) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'OpenAI API key not configured',
+                ], 422);
+            }
 
             // For now, we'll return connection info that the frontend can use
             // In production, you'd want to create a proper WebSocket proxy
@@ -50,16 +65,20 @@ class RealtimeController extends Controller
     public function generateEphemeralKey(Request $request)
     {
         try {
-            $apiKey = config('openai.api_key');
+            $apiKey = $this->apiKeyService->getApiKey();
+            
+            if (!$apiKey) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'OpenAI API key not configured',
+                ], 422);
+            }
 
-            // For now, return a mock ephemeral key structure
-            // In production, you would call OpenAI's API to generate a real ephemeral key
-            // Example: POST https://api.openai.com/v1/realtime/sessions
-
-            // TODO: Implement actual ephemeral key generation when OpenAI provides the endpoint
+            // Return the actual API key for now
+            // OpenAI Realtime API uses the API key directly in WebSocket connection
             return response()->json([
                 'status' => 'success',
-                'ephemeralKey' => 'ek_'.bin2hex(random_bytes(32)), // Mock ephemeral key
+                'ephemeralKey' => $apiKey, // Use actual API key
                 'expiresAt' => now()->addMinutes(60)->toIso8601String(),
                 'model' => 'gpt-4o-realtime-preview-2024-12-17',
             ]);

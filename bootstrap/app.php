@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\EnsureOnboardingCompleted;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -25,10 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'api/realtime/*',
-        ]);
-
-        $middleware->alias([
-            'onboarding' => EnsureOnboardingCompleted::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

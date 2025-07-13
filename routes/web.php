@@ -1,22 +1,23 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    // Auto-login middleware handles authentication
+    // If authenticated, redirect to dashboard
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    
     return Inertia::render('Welcome');
 })->name('home');
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified', 'onboarding'])->name('dashboard');
+})->name('dashboard');
 
-// Onboarding Routes
-Route::middleware(['auth'])->group(function () {
-    Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'show'])->name('onboarding.show');
-    Route::post('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'store'])->name('onboarding.store');
-    Route::post('/onboarding/skip', [\App\Http\Controllers\OnboardingController::class, 'skip'])->name('onboarding.skip');
-});
 
 // NativePHP Desktop Routes
 Route::get('/realtime-agent', function () {
@@ -32,6 +33,14 @@ Route::post('/api/realtime/session', [\App\Http\Controllers\RealtimeController::
     ->name('realtime.session');
 Route::post('/api/realtime/ephemeral-key', [\App\Http\Controllers\RealtimeController::class, 'generateEphemeralKey'])
     ->name('realtime.ephemeral-key');
+
+// API Key Status Route
+Route::get('/api/openai/status', function () {
+    $apiKeyService = app(\App\Services\ApiKeyService::class);
+    return response()->json([
+        'hasApiKey' => $apiKeyService->hasApiKey(),
+    ]);
+})->name('api.openai.status');
 
 // Template Routes
 Route::get('/templates', [\App\Http\Controllers\TemplateController::class, 'index'])
@@ -103,4 +112,3 @@ Route::prefix('api/variables')->group(function () {
 });
 
 require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';

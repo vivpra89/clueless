@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Clueless is an AI-powered meeting assistant that provides real-time transcription, intelligent analysis, and action item extraction from conversations. It's built as a desktop application using Electron/NativePHP with support for multiple AI providers (OpenAI, Anthropic, Gemini).
+Clueless is an AI-powered meeting assistant that provides real-time transcription, intelligent analysis, and action item extraction from conversations. It's built as a single-user desktop application using Electron/NativePHP with OpenAI's Realtime API for voice conversations.
 
 ## Tech Stack
 
@@ -16,7 +16,7 @@ Clueless is an AI-powered meeting assistant that provides real-time transcriptio
 - **Testing**: Pest PHP
 - **Database**: SQLite (dual database setup)
 - **Real-time**: OpenAI Realtime API, WebSockets
-- **AI Integration**: OpenAI PHP, multiple provider support
+- **AI Integration**: OpenAI Realtime API only
 
 ## Development Commands
 
@@ -91,15 +91,15 @@ php artisan test --testsuite=Feature
 ### Directory Structure
 
 - `/app/` - Laravel backend logic
-  - `/Http/Controllers/` - Request handlers (Auth, Conversations, Realtime, Settings)
-  - `/Models/` - Eloquent models (User, Conversation, Transcript, etc.)
-  - `/Services/` - Business logic (AIService, RealtimeRelayService, TranscriptionService)
+  - `/Http/Controllers/` - Request handlers (Conversations, Realtime, Settings)
+  - `/Models/` - Eloquent models (Conversation, Transcript, etc.)
+  - `/Services/` - Business logic (ApiKeyService, RealtimeRelayService, TranscriptionService)
   - `/Providers/` - Service providers
 - `/resources/js/` - Vue frontend application
   - `/components/` - Reusable Vue components
   - `/components/ui/` - UI component library (Reka UI based, shadcn/ui-inspired)
   - `/pages/` - Inertia.js page components
-  - `/layouts/` - Layout components (App, Auth, Settings)
+  - `/layouts/` - Layout components (App, Settings)
   - `/composables/` - Vue composables (useAppearance, useRealtime, etc.)
   - `/services/` - Frontend services (audioCaptureService, realtimeClient)
   - `/types/` - TypeScript type definitions
@@ -112,10 +112,10 @@ php artisan test --testsuite=Feature
 1. **Inertia.js Integration**: Pages are Vue components loaded via Inertia.js, providing SPA-like experience without API endpoints
 2. **Component Library**: UI components in `/resources/js/components/ui/` follow Reka UI patterns
 3. **TypeScript**: Strict mode enabled, with path alias `@/` for `/resources/js/`
-4. **Authentication**: Built-in Laravel auth with custom Vue components
+4. **No Authentication**: Single-user desktop app with no login required
 5. **Theme Support**: Dark/light mode via `useAppearance` composable
 6. **Real-time Features**: WebSocket connections for live transcription using OpenAI Realtime API
-7. **Service Architecture**: Core business logic separated into service classes (AIService, TranscriptionService, etc.)
+7. **Service Architecture**: Core business logic separated into service classes (ApiKeyService, TranscriptionService, etc.)
 
 ### Important Files
 
@@ -156,6 +156,9 @@ php artisan db:seed
 2. Generate app key: `php artisan key:generate`
 3. Create SQLite database: `touch database/database.sqlite`
 4. Run migrations: `php artisan migrate`
+5. Configure OpenAI API key either:
+   - In `.env` file: `OPENAI_API_KEY=sk-...`
+   - Or via Settings > API Keys after launching the app
 
 ## Database Migrations
 
@@ -194,13 +197,13 @@ The application uses OpenAI's Realtime API for live transcription:
 - Backend relay service: `/app/Services/RealtimeRelayService.php`
 - Controllers: `/app/Http/Controllers/RealtimeController.php`
 
-## AI Provider Integration
+## API Key Management
 
-Multiple AI providers are supported through environment configuration:
-- OpenAI (GPT-4, Realtime API)
-- Anthropic (Claude)
-- Google (Gemini)
-- Configuration: Update `.env` with appropriate API keys
+The application uses a simple API key management system:
+- API keys are stored in Laravel's cache (not database)
+- Configure via Settings > API Keys in the app
+- Falls back to `.env` OPENAI_API_KEY if not configured
+- Realtime Agent checks for API key on startup
 
 ## License & Usage
 

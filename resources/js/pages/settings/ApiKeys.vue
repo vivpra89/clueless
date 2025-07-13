@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -11,7 +11,6 @@ import { AlertCircle, Check, Key, Trash2 } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const page = usePage();
-const user = page.props.auth.user;
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -30,7 +29,8 @@ const form = useForm({
 
 const showApiKey = ref(false);
 const isValidating = ref(false);
-const hasApiKey = ref(!!user.openai_api_key);
+const hasApiKey = ref(page.props.hasApiKey || false);
+const isUsingEnvKey = ref(page.props.isUsingEnvKey || false);
 
 const updateApiKey = () => {
     form.put('/settings/api-keys', {
@@ -79,7 +79,9 @@ const deleteApiKey = () => {
                         </CardTitle>
                         <CardDescription>
                             Your OpenAI API key is used for AI features throughout the application.
-                            {{ hasApiKey ? 'You have an API key configured.' : 'No API key configured - using system default.' }}
+                            <span v-if="!hasApiKey">No API key configured.</span>
+                            <span v-else-if="isUsingEnvKey">Using API key from environment (.env file).</span>
+                            <span v-else>Using API key configured in settings.</span>
                         </CardDescription>
                     </CardHeader>
 
@@ -90,7 +92,9 @@ const deleteApiKey = () => {
                                     <Check class="h-5 w-5 text-green-600 dark:text-green-400" />
                                     <p class="text-sm font-medium text-green-800 dark:text-green-200">API Key Configured</p>
                                 </div>
-                                <p class="mt-1 text-sm text-green-700 dark:text-green-300">Your personal API key is being used for AI features.</p>
+                                <p class="mt-1 text-sm text-green-700 dark:text-green-300">
+                                    {{ isUsingEnvKey ? 'Using API key from .env file.' : 'Your personal API key is being used for AI features.' }}
+                                </p>
                             </div>
 
                             <div class="space-y-2">

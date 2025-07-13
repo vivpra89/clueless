@@ -899,7 +899,7 @@ const { isProtectionEnabled, isProtectionSupported, toggleProtection, enableForC
 const { isOverlayMode, isSupported: isOverlaySupported, toggleOverlayMode } = useOverlayMode();
 
 // Computed
-const hasApiKey = computed(() => !!import.meta.env.VITE_OPENAI_API_KEY);
+const hasApiKey = ref(false); // Will be checked on mount
 // const isDev = computed(() => import.meta.env.DEV)
 
 // Sales coach templates filtered
@@ -1120,17 +1120,31 @@ const startSession = async () => {
         // First setup audio capture (mic + system)
         await setupAudioCapture();
 
+        // Get ephemeral key from backend
+        let ephemeralKey;
+        try {
+            const response = await axios.post('/api/realtime/ephemeral-key');
+            if (response.data.status === 'error') {
+                throw new Error(response.data.message);
+            }
+            ephemeralKey = response.data.ephemeralKey;
+        } catch (error) {
+            console.error('Failed to get ephemeral key:', error);
+            alert('Failed to connect: ' + (error.response?.data?.message || 'API key not configured'));
+            connectionStatus.value = 'disconnected';
+            return;
+        }
+
         // Create TWO WebSocket connections for optimized architecture
-        const apiKey = import.meta.env.VITE_OPENAI_API_KEY || localStorage.getItem('OPENAI_API_KEY');
         const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17`;
 
         // 1. Salesperson Transcriber - Simple transcription only
         console.log('🎤 Connecting Salesperson Transcriber...');
-        wsSalesperson = new WebSocket(wsUrl, ['realtime', `openai-insecure-api-key.${apiKey}`, 'openai-beta.realtime-v1']);
+        wsSalesperson = new WebSocket(wsUrl, ['realtime', `openai-insecure-api-key.${ephemeralKey}`, 'openai-beta.realtime-v1']);
 
         // 2. Customer Coach Agent - System audio + Real-time coaching
         console.log('🧠 Connecting Customer Coach Agent...');
-        wsCustomerCoach = new WebSocket(wsUrl, ['realtime', `openai-insecure-api-key.${apiKey}`, 'openai-beta.realtime-v1']);
+        wsCustomerCoach = new WebSocket(wsUrl, ['realtime', `openai-insecure-api-key.${ephemeralKey}`, 'openai-beta.realtime-v1']);
 
         // Set up Salesperson Agent (Microphone only)
         wsSalesperson.onopen = () => {
@@ -2639,13 +2653,27 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 
 // Demo data for visualization
 onMounted(async () => {
+    // Check API key status first
+    try {
+        const response = await axios.get('/api/openai/status');
+        hasApiKey.value = response.data.hasApiKey;
+        
+        if (!hasApiKey.value) {
+            // Redirect to settings page if no API key
+            window.location.href = '/settings/api-keys';
+            return;
+        }
+    } catch (error) {
+        console.error('Failed to check API key status:', error);
+        window.location.href = '/settings/api-keys';
+        return;
+    }
+
     // Fetch templates and variables on mount
     await Promise.all([fetchTemplates(), loadVariables()]);
 
     // Check environment on mount
-    console.log('🔑 Environment check:');
-    console.log('API Key available:', hasApiKey.value);
-    console.log('API Key prefix:', import.meta.env.VITE_OPENAI_API_KEY?.substring(0, 10) + '...');
+    console.log('🔑 API Key is configured');
 
     // Pre-check microphone permission to trigger prompt early if needed
     try {
