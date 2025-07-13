@@ -18,7 +18,7 @@ return new class extends Migration
             $table->json('data'); // Store the full object data
             $table->timestamp('captured_at');
             $table->timestamps();
-            
+
             // Indexes
             $table->index(['session_id', 'insight_type']);
             $table->index(['session_id', 'captured_at']);

@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RealtimeController extends Controller
 {
@@ -17,7 +15,7 @@ class RealtimeController extends Controller
     {
         try {
             $apiKey = config('openai.api_key');
-            
+
             // For now, we'll return connection info that the frontend can use
             // In production, you'd want to create a proper WebSocket proxy
             return response()->json([
@@ -34,13 +32,14 @@ class RealtimeController extends Controller
                         'silence_duration_ms' => 500,
                     ],
                     'tools' => $this->getSalesTools(),
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to create realtime session: ' . $e->getMessage());
+            Log::error('Failed to create realtime session: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to create session'
+                'message' => 'Failed to create session',
             ], 500);
         }
     }
@@ -52,24 +51,25 @@ class RealtimeController extends Controller
     {
         try {
             $apiKey = config('openai.api_key');
-            
+
             // For now, return a mock ephemeral key structure
             // In production, you would call OpenAI's API to generate a real ephemeral key
             // Example: POST https://api.openai.com/v1/realtime/sessions
-            
+
             // TODO: Implement actual ephemeral key generation when OpenAI provides the endpoint
             return response()->json([
                 'status' => 'success',
-                'ephemeralKey' => 'ek_' . bin2hex(random_bytes(32)), // Mock ephemeral key
+                'ephemeralKey' => 'ek_'.bin2hex(random_bytes(32)), // Mock ephemeral key
                 'expiresAt' => now()->addMinutes(60)->toIso8601String(),
                 'model' => 'gpt-4o-realtime-preview-2024-12-17',
             ]);
-            
+
         } catch (\Exception $e) {
-            Log::error('Failed to generate ephemeral key: ' . $e->getMessage());
+            Log::error('Failed to generate ephemeral key: '.$e->getMessage());
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to generate ephemeral key'
+                'message' => 'Failed to generate ephemeral key',
             ], 500);
         }
     }
@@ -89,20 +89,20 @@ class RealtimeController extends Controller
                     'properties' => [
                         'text' => [
                             'type' => 'string',
-                            'description' => 'The complete script text to display'
+                            'description' => 'The complete script text to display',
                         ],
                         'priority' => [
                             'type' => 'string',
                             'enum' => ['high', 'normal', 'low'],
-                            'description' => 'Priority level of the script'
+                            'description' => 'Priority level of the script',
                         ],
                         'context' => [
                             'type' => 'string',
-                            'description' => 'Brief context about when to use this script'
-                        ]
+                            'description' => 'Brief context about when to use this script',
+                        ],
                     ],
-                    'required' => ['text', 'priority', 'context']
-                ]
+                    'required' => ['text', 'priority', 'context'],
+                ],
             ],
             [
                 'type' => 'function',
@@ -113,25 +113,25 @@ class RealtimeController extends Controller
                     'properties' => [
                         'talkRatio' => [
                             'type' => 'number',
-                            'description' => 'Percentage of time salesperson is talking (0-100)'
+                            'description' => 'Percentage of time salesperson is talking (0-100)',
                         ],
                         'sentiment' => [
                             'type' => 'string',
                             'enum' => ['positive', 'negative', 'neutral'],
-                            'description' => 'Current conversation sentiment'
+                            'description' => 'Current conversation sentiment',
                         ],
                         'topics' => [
                             'type' => 'array',
                             'items' => ['type' => 'string'],
-                            'description' => 'Key topics discussed'
+                            'description' => 'Key topics discussed',
                         ],
                         'buyingSignals' => [
                             'type' => 'number',
-                            'description' => 'Number of buying signals detected'
-                        ]
+                            'description' => 'Number of buying signals detected',
+                        ],
                     ],
-                    'required' => ['talkRatio', 'sentiment']
-                ]
+                    'required' => ['talkRatio', 'sentiment'],
+                ],
             ],
             [
                 'type' => 'function',
@@ -143,24 +143,24 @@ class RealtimeController extends Controller
                         'type' => [
                             'type' => 'string',
                             'enum' => ['buying_signal', 'objection', 'question', 'closing_opportunity'],
-                            'description' => 'Type of opportunity'
+                            'description' => 'Type of opportunity',
                         ],
                         'confidence' => [
                             'type' => 'number',
-                            'description' => 'Confidence level (0-1)'
+                            'description' => 'Confidence level (0-1)',
                         ],
                         'suggestion' => [
                             'type' => 'string',
-                            'description' => 'Suggested action to take'
+                            'description' => 'Suggested action to take',
                         ],
                         'urgency' => [
                             'type' => 'string',
                             'enum' => ['immediate', 'soon', 'low'],
-                            'description' => 'How urgent is this opportunity'
-                        ]
+                            'description' => 'How urgent is this opportunity',
+                        ],
                     ],
-                    'required' => ['type', 'confidence', 'suggestion']
-                ]
+                    'required' => ['type', 'confidence', 'suggestion'],
+                ],
             ],
             [
                 'type' => 'function',
@@ -171,7 +171,7 @@ class RealtimeController extends Controller
                     'properties' => [
                         'topic' => [
                             'type' => 'string',
-                            'description' => 'Topic of the battle card'
+                            'description' => 'Topic of the battle card',
                         ],
                         'content' => [
                             'type' => 'object',
@@ -179,23 +179,23 @@ class RealtimeController extends Controller
                                 'keyPoints' => [
                                     'type' => 'array',
                                     'items' => ['type' => 'string'],
-                                    'description' => 'Key talking points'
+                                    'description' => 'Key talking points',
                                 ],
                                 'advantages' => [
                                     'type' => 'array',
                                     'items' => ['type' => 'string'],
-                                    'description' => 'Our advantages'
+                                    'description' => 'Our advantages',
                                 ],
                                 'statistics' => [
                                     'type' => 'array',
                                     'items' => ['type' => 'string'],
-                                    'description' => 'Relevant statistics'
-                                ]
-                            ]
-                        ]
+                                    'description' => 'Relevant statistics',
+                                ],
+                            ],
+                        ],
                     ],
-                    'required' => ['topic', 'content']
-                ]
+                    'required' => ['topic', 'content'],
+                ],
             ],
             [
                 'type' => 'function',
@@ -206,25 +206,25 @@ class RealtimeController extends Controller
                     'properties' => [
                         'investment' => [
                             'type' => 'number',
-                            'description' => 'Initial investment amount'
+                            'description' => 'Initial investment amount',
                         ],
                         'savings' => [
                             'type' => 'number',
-                            'description' => 'Monthly or annual savings'
+                            'description' => 'Monthly or annual savings',
                         ],
                         'timeframe' => [
                             'type' => 'string',
-                            'description' => 'Timeframe for ROI calculation'
+                            'description' => 'Timeframe for ROI calculation',
                         ],
                         'additionalBenefits' => [
                             'type' => 'array',
                             'items' => ['type' => 'string'],
-                            'description' => 'Non-monetary benefits'
-                        ]
+                            'description' => 'Non-monetary benefits',
+                        ],
                     ],
-                    'required' => ['investment', 'savings', 'timeframe']
-                ]
-            ]
+                    'required' => ['investment', 'savings', 'timeframe'],
+                ],
+            ],
         ];
     }
 }

@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\VariableService;
 use App\Services\TemplateVariableResolver;
-use Illuminate\Http\Request;
+use App\Services\VariableService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class VariableController extends Controller
 {
     private VariableService $variableService;
+
     private TemplateVariableResolver $templateResolver;
 
     public function __construct(VariableService $variableService, TemplateVariableResolver $templateResolver)
@@ -26,11 +26,11 @@ class VariableController extends Controller
     public function index(Request $request)
     {
         $category = $request->get('category');
-        
-        $variables = $category 
-            ? $this->variableService->getByCategory($category) 
+
+        $variables = $category
+            ? $this->variableService->getByCategory($category)
             : $this->variableService->getAll();
-            
+
         $categories = $this->variableService->getCategories();
 
         if ($request->wantsJson()) {
@@ -54,7 +54,7 @@ class VariableController extends Controller
     {
         try {
             $variable = $this->variableService->upsert($request->all());
-            
+
             return response()->json([
                 'message' => 'Variable created successfully',
                 'variable' => $variable,
@@ -80,7 +80,7 @@ class VariableController extends Controller
         try {
             $data = array_merge($request->all(), ['key' => $key]);
             $variable = $this->variableService->upsert($data);
-            
+
             return response()->json([
                 'message' => 'Variable updated successfully',
                 'variable' => $variable,
@@ -105,13 +105,13 @@ class VariableController extends Controller
     {
         try {
             $deleted = $this->variableService->delete($key);
-            
-            if (!$deleted) {
+
+            if (! $deleted) {
                 return response()->json([
                     'message' => 'Variable not found',
                 ], 404);
             }
-            
+
             return response()->json([
                 'message' => 'Variable deleted successfully',
             ]);
@@ -134,13 +134,13 @@ class VariableController extends Controller
 
         try {
             $content = json_decode($request->file('file')->get(), true);
-            
+
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception('Invalid JSON file');
             }
-            
+
             $this->variableService->import($content);
-            
+
             return response()->json([
                 'message' => 'Variables imported successfully',
             ]);
@@ -164,9 +164,9 @@ class VariableController extends Controller
     {
         try {
             $data = $this->variableService->export();
-            
+
             return response()->json($data)
-                ->header('Content-Disposition', 'attachment; filename="variables-export-' . now()->format('Y-m-d') . '.json"');
+                ->header('Content-Disposition', 'attachment; filename="variables-export-'.now()->format('Y-m-d').'.json"');
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to export variables',
@@ -190,9 +190,9 @@ class VariableController extends Controller
                 $request->input('text'),
                 $request->input('overrides', [])
             );
-            
+
             $extractedVariables = $this->templateResolver->extractVariables($request->input('text'));
-            
+
             return response()->json([
                 'original' => $request->input('text'),
                 'resolved' => $resolvedText,
@@ -213,7 +213,7 @@ class VariableController extends Controller
     {
         try {
             $usage = $this->templateResolver->getAllUsedVariables();
-            
+
             return response()->json([
                 'usage' => $usage,
             ]);
@@ -232,7 +232,7 @@ class VariableController extends Controller
     {
         try {
             $this->variableService->seedDefaults();
-            
+
             return response()->json([
                 'message' => 'Default variables seeded successfully',
             ]);

@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ConversationSession;
-use App\Models\ConversationTranscript;
-use App\Models\ConversationInsight;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -22,7 +20,7 @@ class ConversationController extends Controller
             ->paginate(20);
 
         return Inertia::render('Conversations/Index', [
-            'sessions' => $sessions
+            'sessions' => $sessions,
         ]);
     }
 
@@ -64,7 +62,7 @@ class ConversationController extends Controller
 
         return response()->json([
             'session_id' => $session->id,
-            'message' => 'Session started successfully'
+            'message' => 'Session started successfully',
         ]);
     }
 
@@ -104,7 +102,7 @@ class ConversationController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Session ended successfully'
+            'message' => 'Session ended successfully',
         ]);
     }
 
@@ -137,7 +135,7 @@ class ConversationController extends Controller
 
         return response()->json([
             'transcript_id' => $transcript->id,
-            'message' => 'Transcript saved successfully'
+            'message' => 'Transcript saved successfully',
         ]);
     }
 
@@ -174,7 +172,7 @@ class ConversationController extends Controller
         });
 
         return response()->json([
-            'message' => 'Transcripts saved successfully'
+            'message' => 'Transcripts saved successfully',
         ]);
     }
 
@@ -199,7 +197,7 @@ class ConversationController extends Controller
 
         return response()->json([
             'insight_id' => $insight->id,
-            'message' => 'Insight saved successfully'
+            'message' => 'Insight saved successfully',
         ]);
     }
 
@@ -228,7 +226,7 @@ class ConversationController extends Controller
         });
 
         return response()->json([
-            'message' => 'Insights saved successfully'
+            'message' => 'Insights saved successfully',
         ]);
     }
 
@@ -248,7 +246,7 @@ class ConversationController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Notes updated successfully'
+            'message' => 'Notes updated successfully',
         ]);
     }
 
@@ -268,7 +266,7 @@ class ConversationController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Title updated successfully'
+            'message' => 'Title updated successfully',
         ]);
     }
 

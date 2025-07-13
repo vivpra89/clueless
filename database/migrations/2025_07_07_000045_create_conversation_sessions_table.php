@@ -21,26 +21,26 @@ return new class extends Migration
             $table->dateTime('ended_at')->nullable();
             $table->integer('duration_seconds')->default(0);
             $table->string('template_used')->nullable();
-            
+
             // Customer Intelligence Summary
             $table->string('final_intent')->nullable();
             $table->string('final_buying_stage')->nullable();
             $table->integer('final_engagement_level')->default(50);
             $table->string('final_sentiment')->nullable();
-            
+
             // Conversation Metrics
             $table->integer('total_transcripts')->default(0);
             $table->integer('total_insights')->default(0);
             $table->integer('total_topics')->default(0);
             $table->integer('total_commitments')->default(0);
             $table->integer('total_action_items')->default(0);
-            
+
             // Summary and notes
             $table->text('ai_summary')->nullable();
             $table->text('user_notes')->nullable();
-            
+
             $table->timestamps();
-            
+
             // Indexes
             $table->index(['user_id', 'started_at']);
             $table->index('customer_name');

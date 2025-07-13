@@ -59,14 +59,14 @@ Output insights about qualification, fit score, and next steps.',
                     'product_name' => 'Clueless',
                     'base_price' => '$49/user/month',
                     'team_price' => '$39/user/month',
-                    'trial_length' => '14 days'
+                    'trial_length' => '14 days',
                 ],
                 'talking_points' => [
                     'How do you currently handle meeting notes?',
                     'What challenges do you face with action item tracking?',
                     'How many meetings does your team have weekly?',
                     'What happens when key people miss meetings?',
-                    'How do you ensure nothing falls through the cracks?'
+                    'How do you ensure nothing falls through the cracks?',
                 ],
                 'icon' => 'Phone',
                 'category' => 'sales_coach',
@@ -119,7 +119,7 @@ When showing ROI, emphasize:
                 'variables' => [
                     'demo_length' => '30 minutes',
                     'key_features' => '5 core features',
-                    'roi_multiplier' => '10x in 3 months'
+                    'roi_multiplier' => '10x in 3 months',
                 ],
                 'talking_points' => [
                     'Live transcription accuracy demonstration',
@@ -127,7 +127,7 @@ When showing ROI, emphasize:
                     'Integration with existing tools',
                     'Security and compliance features',
                     'Team collaboration capabilities',
-                    'Analytics and insights dashboard'
+                    'Analytics and insights dashboard',
                 ],
                 'icon' => 'Monitor',
                 'category' => 'sales_coach',
@@ -184,7 +184,7 @@ When discussing price, always connect to value:
                     'starter_price' => '$49/user/month',
                     'team_price' => '$39/user/month',
                     'enterprise_price' => '$29/user/month',
-                    'annual_discount' => '20%'
+                    'annual_discount' => '20%',
                 ],
                 'talking_points' => [
                     'ROI calculation based on time saved',
@@ -192,7 +192,7 @@ When discussing price, always connect to value:
                     'Volume discounts available',
                     'Flexible payment terms',
                     'Success stories from similar companies',
-                    'Risk-free trial period'
+                    'Risk-free trial period',
                 ],
                 'icon' => 'DollarSign',
                 'category' => 'sales_coach',
@@ -251,7 +251,7 @@ When discussing expansion:
                 'variables' => [
                     'health_score' => 'Green/Yellow/Red',
                     'adoption_rate' => 'X% of licensed users',
-                    'expansion_potential' => 'Additional teams/features'
+                    'expansion_potential' => 'Additional teams/features',
                 ],
                 'talking_points' => [
                     'Usage metrics and adoption rates',
@@ -259,7 +259,7 @@ When discussing expansion:
                     'Optimization opportunities',
                     'New features and updates',
                     'Team expansion possibilities',
-                    'Advanced training options'
+                    'Advanced training options',
                 ],
                 'icon' => 'Heart',
                 'category' => 'customer_success',
@@ -319,7 +319,7 @@ When discussing architecture:
                 'variables' => [
                     'api_rate_limit' => '1000-unlimited/hour',
                     'setup_time' => '1 day - 6 weeks',
-                    'security_cert' => 'SOC2, HIPAA'
+                    'security_cert' => 'SOC2, HIPAA',
                 ],
                 'talking_points' => [
                     'API documentation walkthrough',
@@ -327,7 +327,7 @@ When discussing architecture:
                     'Integration architecture',
                     'Data flow and storage',
                     'Authentication methods',
-                    'Sandbox environment access'
+                    'Sandbox environment access',
                 ],
                 'icon' => 'Code',
                 'category' => 'technical',
@@ -386,7 +386,7 @@ Strategic benefits:
                 'variables' => [
                     'roi_timeline' => '3 months',
                     'productivity_gain' => '40%',
-                    'strategic_value' => 'Digital transformation enabler'
+                    'strategic_value' => 'Digital transformation enabler',
                 ],
                 'talking_points' => [
                     'Strategic vision alignment',
@@ -394,7 +394,7 @@ Strategic benefits:
                     'Organization-wide impact',
                     'Success metrics and KPIs',
                     'Implementation roadmap',
-                    'Expected ROI and timeline'
+                    'Expected ROI and timeline',
                 ],
                 'icon' => 'Briefcase',
                 'category' => 'executive',
@@ -454,7 +454,7 @@ When resolving issues:
                 'variables' => [
                     'response_sla' => '24 hours',
                     'critical_sla' => '4 hours',
-                    'satisfaction_target' => '95%'
+                    'satisfaction_target' => '95%',
                 ],
                 'talking_points' => [
                     'Issue validation and reproduction',
@@ -462,7 +462,7 @@ When resolving issues:
                     'Root cause analysis',
                     'Prevention measures',
                     'Follow-up timeline',
-                    'Escalation if needed'
+                    'Escalation if needed',
                 ],
                 'icon' => 'Wrench',
                 'category' => 'support',
@@ -520,7 +520,7 @@ Integration opportunities:
                 'variables' => [
                     'referral_commission' => '20% year 1',
                     'reseller_discount' => '30%',
-                    'integration_timeline' => '60-90 days'
+                    'integration_timeline' => '60-90 days',
                 ],
                 'talking_points' => [
                     'Partnership value proposition',
@@ -528,7 +528,7 @@ Integration opportunities:
                     'Go-to-market strategy',
                     'Revenue models',
                     'Success metrics',
-                    'Next steps and timeline'
+                    'Next steps and timeline',
                 ],
                 'icon' => 'Users',
                 'category' => 'partnership',
@@ -587,14 +587,14 @@ Red flags to highlight:
                 'variables' => [
                     'meeting_duration' => '15-30 minutes',
                     'team_size' => 'Varies',
-                    'format' => 'Yesterday/Today/Blockers'
+                    'format' => 'Yesterday/Today/Blockers',
                 ],
                 'talking_points' => [
                     'What did you complete yesterday?',
                     'What are you working on today?',
                     'Any blockers or impediments?',
                     'Do you need help from anyone?',
-                    'Are we on track for sprint goals?'
+                    'Are we on track for sprint goals?',
                 ],
                 'icon' => 'Users',
                 'category' => 'team_meeting',
@@ -665,7 +665,7 @@ Output priorities:
                 'variables' => [
                     'review_period' => 'Quarterly',
                     'planning_horizon' => 'Next 90 days',
-                    'key_metrics' => 'Revenue, NPS, Retention'
+                    'key_metrics' => 'Revenue, NPS, Retention',
                 ],
                 'talking_points' => [
                     'Q3 performance vs targets',
@@ -675,7 +675,7 @@ Output priorities:
                     'Q4 priorities and goals',
                     'Resource requirements',
                     'Risk mitigation strategies',
-                    'Success metrics for Q4'
+                    'Success metrics for Q4',
                 ],
                 'icon' => 'Calendar',
                 'category' => 'strategic',

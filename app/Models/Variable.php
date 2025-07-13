@@ -66,7 +66,7 @@ class Variable extends Model
             ['value' => $this->validation_rules]
         );
 
-        return !$validator->fails();
+        return ! $validator->fails();
     }
 
     /**

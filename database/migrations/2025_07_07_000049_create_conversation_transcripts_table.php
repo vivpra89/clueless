@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('system_category')->nullable(); // For system messages: info, warning, success, error
             $table->integer('order_index'); // For maintaining order
             $table->timestamps();
-            
+
             // Indexes
             $table->index(['session_id', 'spoken_at']);
             $table->index(['session_id', 'order_index']);

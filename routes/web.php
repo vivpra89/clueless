@@ -4,21 +4,21 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Assistant/Main', [
-        'conversations' => [],
-        'flash' => session('flash', []),
-    ]);
+    return Inertia::render('Welcome');
 })->name('home');
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'onboarding'])->name('dashboard');
+
+// Onboarding Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/onboarding', [\App\Http\Controllers\OnboardingController::class, 'store'])->name('onboarding.store');
+    Route::post('/onboarding/skip', [\App\Http\Controllers\OnboardingController::class, 'skip'])->name('onboarding.skip');
+});
 
 // NativePHP Desktop Routes
-Route::get('/assistant', function () {
-    return Inertia::render('Assistant/Main');
-})->name('assistant');
-
 Route::get('/realtime-agent', function () {
     return Inertia::render('RealtimeAgent/Main');
 })->name('realtime-agent');
@@ -27,27 +27,11 @@ Route::get('/realtime-agent/settings', function () {
     return Inertia::render('RealtimeAgent/Settings');
 })->name('realtime-agent.settings');
 
-// AI Assistant API Routes
-Route::post('/api/assistant/chat', [\App\Http\Controllers\AssistantController::class, 'chat'])
-    ->name('assistant.chat');
-Route::post('/api/assistant/transcribe', [\App\Http\Controllers\AssistantController::class, 'transcribe'])
-    ->name('assistant.transcribe');
-Route::post('/api/assistant/analyze-conversation', [\App\Http\Controllers\AssistantController::class, 'analyzeConversation'])
-    ->name('assistant.analyze-conversation');
-Route::post('/api/assistant/analyze-conversation-stream', [\App\Http\Controllers\AssistantController::class, 'analyzeConversationStream'])
-    ->name('assistant.analyze-conversation-stream');
-
 // Realtime API Routes
 Route::post('/api/realtime/session', [\App\Http\Controllers\RealtimeController::class, 'createSession'])
     ->name('realtime.session');
 Route::post('/api/realtime/ephemeral-key', [\App\Http\Controllers\RealtimeController::class, 'generateEphemeralKey'])
     ->name('realtime.ephemeral-key');
-Route::post('/api/assistant/summarize', [\App\Http\Controllers\AssistantController::class, 'summarize'])
-    ->name('assistant.summarize');
-Route::post('/api/assistant/end-session', [\App\Http\Controllers\AssistantController::class, 'endSession'])
-    ->name('assistant.end-session');
-Route::get('/api/assistant/context-history', [\App\Http\Controllers\AssistantController::class, 'contextHistory'])
-    ->name('assistant.context-history');
 
 // Template Routes
 Route::get('/templates', [\App\Http\Controllers\TemplateController::class, 'index'])

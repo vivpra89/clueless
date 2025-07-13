@@ -29,7 +29,7 @@ class ConversationTranscript extends Model
 
     public function getSpeakerLabelAttribute(): string
     {
-        return match($this->speaker) {
+        return match ($this->speaker) {
             'salesperson' => 'You',
             'customer' => 'Customer',
             'system' => 'System',
@@ -39,7 +39,7 @@ class ConversationTranscript extends Model
 
     public function getSpeakerColorAttribute(): string
     {
-        return match($this->speaker) {
+        return match ($this->speaker) {
             'salesperson' => 'text-blue-600',
             'customer' => 'text-green-600',
             'system' => 'text-gray-500',
