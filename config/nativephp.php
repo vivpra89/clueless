@@ -13,7 +13,8 @@ return [
      * usually in the form of a reverse domain name.
      * For example: com.nativephp.app
      */
-    'app_id' => env('NATIVEPHP_APP_ID', 'com.nativephp.app'),
+    '
+    ' => env('NATIVEPHP_APP_ID', 'com.nativephp.app'),
 
     /**
      * If your application allows deep linking, you can specify the scheme
@@ -63,6 +64,8 @@ return [
         'GITHUB_*',
         'DO_SPACES_*',
         '*_SECRET',
+        'OPENAI_API_KEY',
+        'VITE_OPENAI_API_KEY',
         'ZEPHPYR_*',
         'NATIVEPHP_UPDATER_PATH',
         'NATIVEPHP_APPLE_ID',

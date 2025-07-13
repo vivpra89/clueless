@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -42,10 +40,7 @@ const updateApiKey = () => {
         onSuccess: () => {
             form.reset();
             hasApiKey.value = true;
-            toast({
-                title: 'Success',
-                description: 'Your OpenAI API key has been updated successfully.',
-            });
+            alert('Success: Your OpenAI API key has been updated successfully.');
         },
         onFinish: () => {
             isValidating.value = false;
@@ -58,10 +53,7 @@ const deleteApiKey = () => {
         form.delete('/settings/api-keys', {
             onSuccess: () => {
                 hasApiKey.value = false;
-                toast({
-                    title: 'API Key Deleted',
-                    description: 'Your OpenAI API key has been removed.',
-                });
+                alert('Your OpenAI API key has been removed.');
             },
         });
     }
@@ -128,12 +120,10 @@ const deleteApiKey = () => {
                                 </p>
                             </div>
 
-                            <Alert v-if="form.errors.openai_api_key" variant="destructive">
+                            <div v-if="form.errors.openai_api_key" class="flex items-center gap-2 rounded-md border border-red-500 bg-red-50 p-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200">
                                 <AlertCircle class="h-4 w-4" />
-                                <AlertDescription>
-                                    {{ form.errors.openai_api_key }}
-                                </AlertDescription>
-                            </Alert>
+                                <span>{{ form.errors.openai_api_key }}</span>
+                            </div>
                         </CardContent>
 
                         <CardFooter class="flex gap-3">
