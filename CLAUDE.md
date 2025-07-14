@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+Clueless is an AI-powered meeting assistant that provides real-time transcription, intelligent analysis, and action item extraction from conversations. It's built as a single-user desktop application using Electron/NativePHP with OpenAI's Realtime API for voice conversations.
+
 ## Tech Stack
 
 - **Backend**: Laravel 12.0 (PHP 8.2+)
@@ -10,7 +14,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build**: Vite 6
 - **Desktop**: NativePHP/Electron
 - **Testing**: Pest PHP
-- **Database**: SQLite (default)
+- **Database**: SQLite (dual database setup)
+- **Real-time**: OpenAI Realtime API, WebSockets
+- **AI Integration**: OpenAI Realtime API only
 
 ## Development Commands
 
@@ -69,6 +75,15 @@ php artisan test tests/Feature/DashboardTest.php
 
 # Run tests with coverage (if configured)
 php artisan test --coverage
+
+# Run tests in parallel
+php artisan test --parallel
+
+# Run only unit tests
+php artisan test --testsuite=Unit
+
+# Run only feature tests
+php artisan test --testsuite=Feature
 ```
 
 ## Project Architecture
@@ -76,15 +91,17 @@ php artisan test --coverage
 ### Directory Structure
 
 - `/app/` - Laravel backend logic
-  - `/Http/Controllers/` - Request handlers (Auth, Settings)
-  - `/Models/` - Eloquent models
+  - `/Http/Controllers/` - Request handlers (Conversations, Realtime, Settings)
+  - `/Models/` - Eloquent models (Conversation, Transcript, etc.)
+  - `/Services/` - Business logic (ApiKeyService, RealtimeRelayService, TranscriptionService)
   - `/Providers/` - Service providers
 - `/resources/js/` - Vue frontend application
   - `/components/` - Reusable Vue components
-  - `/components/ui/` - UI component library (shadcn/ui-inspired)
+  - `/components/ui/` - UI component library (Reka UI based, shadcn/ui-inspired)
   - `/pages/` - Inertia.js page components
-  - `/layouts/` - Layout components
-  - `/composables/` - Vue composables (e.g., useAppearance)
+  - `/layouts/` - Layout components (App, Settings)
+  - `/composables/` - Vue composables (useAppearance, useRealtime, etc.)
+  - `/services/` - Frontend services (audioCaptureService, realtimeClient)
   - `/types/` - TypeScript type definitions
 - `/routes/` - Application routing (web.php)
 - `/database/` - Migrations, factories, seeders
@@ -95,8 +112,10 @@ php artisan test --coverage
 1. **Inertia.js Integration**: Pages are Vue components loaded via Inertia.js, providing SPA-like experience without API endpoints
 2. **Component Library**: UI components in `/resources/js/components/ui/` follow Reka UI patterns
 3. **TypeScript**: Strict mode enabled, with path alias `@/` for `/resources/js/`
-4. **Authentication**: Built-in Laravel auth with custom Vue components
+4. **No Authentication**: Single-user desktop app with no login required
 5. **Theme Support**: Dark/light mode via `useAppearance` composable
+6. **Real-time Features**: WebSocket connections for live transcription using OpenAI Realtime API
+7. **Service Architecture**: Core business logic separated into service classes (ApiKeyService, TranscriptionService, etc.)
 
 ### Important Files
 
@@ -137,6 +156,9 @@ php artisan db:seed
 2. Generate app key: `php artisan key:generate`
 3. Create SQLite database: `touch database/database.sqlite`
 4. Run migrations: `php artisan migrate`
+5. Configure OpenAI API key either:
+   - In `.env` file: `OPENAI_API_KEY=sk-...`
+   - Or via Settings > API Keys after launching the app
 
 ## Database Migrations
 
@@ -167,9 +189,34 @@ Example usage:
 - For Laravel docs: Use Context7 to get the latest Laravel 12 documentation
 - For any other library: First use `mcp__context7__resolve-library-id` to find the library
 
+## Working with Real-time Features
+
+The application uses OpenAI's Realtime API for live transcription:
+- Frontend audio capture: `/resources/js/services/audioCaptureService.ts`
+- WebSocket client: `/resources/js/services/realtimeClient.ts`
+- Backend relay service: `/app/Services/RealtimeRelayService.php`
+- Controllers: `/app/Http/Controllers/RealtimeController.php`
+
+## API Key Management
+
+The application uses a simple API key management system:
+- API keys are stored in Laravel's cache (not database)
+- Configure via Settings > API Keys in the app
+- Falls back to `.env` OPENAI_API_KEY if not configured
+- Realtime Agent checks for API key on startup
+
+## License & Usage
+
+This project uses MIT License with Commons Clause:
+- ✅ Free for personal and internal business use
+- ❌ Commercial use (SaaS, resale) requires commercial agreement
+- See `COMMONS_CLAUSE.md` for details
+
 ## Notes
 
 - ESLint ignores `/resources/js/components/ui/*` (third-party UI components)
 - Prettier formats all files in `/resources/` directory
 - NativePHP allows running as desktop application
 - Concurrently runs multiple processes in development (server, queue, logs, vite)
+- Built primarily for macOS desktop usage
+- Uses Pusher for additional real-time features

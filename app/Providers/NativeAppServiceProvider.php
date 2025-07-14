@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-use Native\Laravel\Contracts\ProvidesPhpIni;
+use App\Models\User;
 // use Native\Laravel\Facades\GlobalShortcut;
-use Native\Laravel\Facades\Window;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
-use App\Models\User;
+use Native\Laravel\Contracts\ProvidesPhpIni;
+use Native\Laravel\Facades\Window;
 
 class NativeAppServiceProvider implements ProvidesPhpIni
 {
@@ -34,7 +34,7 @@ class NativeAppServiceProvider implements ProvidesPhpIni
                 'contextIsolation' => false,
                 'webSecurity' => false,
                 'backgroundThrottling' => false,
-                'sandbox' => false
+                'sandbox' => false,
             ])
             // Set window to floating panel level for better screen protection
             ->alwaysOnTop(false);

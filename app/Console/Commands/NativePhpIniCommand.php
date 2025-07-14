@@ -32,6 +32,7 @@ class NativePhpIniCommand extends Command
             'post_max_size' => '50M',
         ];
         echo json_encode($settings);
+
         return 0;
     }
 }

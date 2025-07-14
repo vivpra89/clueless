@@ -21,7 +21,7 @@ return new class extends Migration
             $table->boolean('is_system')->default(false);
             $table->json('validation_rules')->nullable();
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index('category');
             $table->index('is_system');

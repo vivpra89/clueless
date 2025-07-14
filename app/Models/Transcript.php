@@ -57,26 +57,26 @@ class Transcript extends Model
     public function appendSegment(string $text, string $speaker = 'unknown', ?float $timestamp = null): void
     {
         $segments = $this->segments ?? [];
-        
+
         $segment = [
             'speaker' => $speaker,
             'text' => $text,
             'timestamp' => $timestamp ?? now()->timestamp,
         ];
-        
+
         $segments[] = $segment;
         $this->segments = $segments;
-        
+
         // Update speaker-specific transcripts
         if ($speaker === 'host') {
             $this->host_transcript = trim(($this->host_transcript ?? '').' '.$text);
         } elseif ($speaker === 'guest') {
             $this->guest_transcript = trim(($this->guest_transcript ?? '').' '.$text);
         }
-        
+
         // Update combined transcript with speaker labels
         $this->transcript = trim($this->transcript.' ['.$speaker.'] '.$text);
-        
+
         $this->save();
     }
 

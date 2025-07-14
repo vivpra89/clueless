@@ -13,7 +13,7 @@ class VariableService
      * Cache key prefix for variables
      */
     private const CACHE_PREFIX = 'variables:';
-    
+
     /**
      * Cache duration in seconds (1 hour)
      */
@@ -24,7 +24,7 @@ class VariableService
      */
     public function getAll(): Collection
     {
-        return Cache::remember(self::CACHE_PREFIX . 'all', self::CACHE_TTL, function () {
+        return Cache::remember(self::CACHE_PREFIX.'all', self::CACHE_TTL, function () {
             return Variable::orderBy('category')->orderBy('key')->get();
         });
     }
@@ -34,7 +34,7 @@ class VariableService
      */
     public function getByCategory(string $category): Collection
     {
-        return Cache::remember(self::CACHE_PREFIX . "category:{$category}", self::CACHE_TTL, function () use ($category) {
+        return Cache::remember(self::CACHE_PREFIX."category:{$category}", self::CACHE_TTL, function () use ($category) {
             return Variable::byCategory($category)->orderBy('key')->get();
         });
     }
@@ -44,7 +44,7 @@ class VariableService
      */
     public function getByKey(string $key): ?Variable
     {
-        return Cache::remember(self::CACHE_PREFIX . "key:{$key}", self::CACHE_TTL, function () use ($key) {
+        return Cache::remember(self::CACHE_PREFIX."key:{$key}", self::CACHE_TTL, function () use ($key) {
             return Variable::where('key', $key)->first();
         });
     }
@@ -86,8 +86,8 @@ class VariableService
     public function delete(string $key): bool
     {
         $variable = Variable::where('key', $key)->first();
-        
-        if (!$variable) {
+
+        if (! $variable) {
             return false;
         }
 
@@ -111,7 +111,7 @@ class VariableService
     {
         // Get all variables as key-value pairs
         $variables = $this->getVariablesAsArray();
-        
+
         // Merge with overrides (overrides take precedence)
         $variables = array_merge($variables, $overrides);
 
@@ -125,7 +125,7 @@ class VariableService
             };
 
             // Replace {key} pattern
-            $text = str_replace('{' . $key . '}', $replacement, $text);
+            $text = str_replace('{'.$key.'}', $replacement, $text);
         }
 
         return $text;
@@ -137,14 +137,14 @@ class VariableService
     public function validate(string $key, $value): bool
     {
         $variable = $this->getByKey($key);
-        
-        if (!$variable) {
+
+        if (! $variable) {
             return false;
         }
 
         // Set the value temporarily for validation
         $variable->value = $value;
-        
+
         return $variable->validate();
     }
 
@@ -154,7 +154,7 @@ class VariableService
     public function export(): array
     {
         $variables = Variable::all();
-        
+
         return [
             'version' => '1.0',
             'exported_at' => now()->toIso8601String(),
@@ -190,7 +190,7 @@ class VariableService
         DB::transaction(function () use ($data) {
             foreach ($data['variables'] as $variableData) {
                 // Skip system variables unless explicitly allowed
-                if (($variableData['is_system'] ?? false) && !config('app.allow_system_variable_import', false)) {
+                if (($variableData['is_system'] ?? false) && ! config('app.allow_system_variable_import', false)) {
                     continue;
                 }
 
@@ -207,7 +207,7 @@ class VariableService
      */
     public function getVariablesAsArray(): array
     {
-        return Cache::remember(self::CACHE_PREFIX . 'array', self::CACHE_TTL, function () {
+        return Cache::remember(self::CACHE_PREFIX.'array', self::CACHE_TTL, function () {
             return Variable::all()->pluck('typed_value', 'key')->toArray();
         });
     }
@@ -217,7 +217,7 @@ class VariableService
      */
     public function getCategories(): Collection
     {
-        return Cache::remember(self::CACHE_PREFIX . 'categories', self::CACHE_TTL, function () {
+        return Cache::remember(self::CACHE_PREFIX.'categories', self::CACHE_TTL, function () {
             return Variable::distinct('category')->pluck('category')->sort();
         });
     }
@@ -228,13 +228,13 @@ class VariableService
     private function clearCache(?Variable $variable = null): void
     {
         // Clear all variable caches
-        Cache::forget(self::CACHE_PREFIX . 'all');
-        Cache::forget(self::CACHE_PREFIX . 'array');
-        Cache::forget(self::CACHE_PREFIX . 'categories');
-        
+        Cache::forget(self::CACHE_PREFIX.'all');
+        Cache::forget(self::CACHE_PREFIX.'array');
+        Cache::forget(self::CACHE_PREFIX.'categories');
+
         if ($variable) {
-            Cache::forget(self::CACHE_PREFIX . "key:{$variable->key}");
-            Cache::forget(self::CACHE_PREFIX . "category:{$variable->category}");
+            Cache::forget(self::CACHE_PREFIX."key:{$variable->key}");
+            Cache::forget(self::CACHE_PREFIX."category:{$variable->category}");
         }
     }
 

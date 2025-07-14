@@ -27,6 +27,7 @@ class NativeConfigCommand extends Command
     {
         // Return empty JSON to satisfy NativePHP expectations
         echo json_encode([]);
+
         return 0;
     }
 }
