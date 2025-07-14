@@ -47,13 +47,19 @@ class RealtimeController extends Controller
 
             $data = $response->json();
             
+            // Validate response structure
+            if (!isset($data['client_secret']['value']) || !isset($data['client_secret']['expires_at'])) {
+                Log::error('Invalid response structure from OpenAI API', ['response' => $data]);
+                throw new \Exception('Invalid response structure from OpenAI API');
+            }
+            
             // Return ephemeral key data
             return response()->json([
                 'status' => 'success',
                 'ephemeralKey' => $data['client_secret']['value'],
                 'expiresAt' => $data['client_secret']['expires_at'],
-                'sessionId' => $data['id'],
-                'model' => $data['model'],
+                'sessionId' => $data['id'] ?? null,
+                'model' => $data['model'] ?? 'gpt-4o-realtime-preview-2024-12-17',
             ]);
 
         } catch (\Exception $e) {
