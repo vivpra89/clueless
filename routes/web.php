@@ -29,8 +29,6 @@ Route::get('/realtime-agent/settings', function () {
 })->name('realtime-agent.settings');
 
 // Realtime API Routes
-Route::post('/api/realtime/session', [\App\Http\Controllers\RealtimeController::class, 'createSession'])
-    ->name('realtime.session');
 Route::post('/api/realtime/ephemeral-key', [\App\Http\Controllers\RealtimeController::class, 'generateEphemeralKey'])
     ->name('realtime.ephemeral-key');
 
