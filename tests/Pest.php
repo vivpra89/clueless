@@ -12,8 +12,11 @@
 */
 
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
+
+pest()->extend(Tests\TestCase::class)
+    ->in('Unit');
 
 /*
 |--------------------------------------------------------------------------
@@ -41,7 +44,27 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Create a mock API key for testing
+ */
+function mockApiKey(): string
 {
-    // ..
+    return 'sk-test-' . str_repeat('x', 40);
+}
+
+/**
+ * Mock a successful OpenAI ephemeral key response
+ */
+function mockEphemeralKeyResponse(): array
+{
+    return [
+        'id' => 'sess_' . uniqid(),
+        'object' => 'realtime.session',
+        'model' => 'gpt-4o-realtime-preview-2024-12-17',
+        'client_secret' => [
+            'value' => 'ek_' . bin2hex(random_bytes(32)),
+            'expires_at' => time() + 7200, // 2 hours from now
+        ],
+        'tools' => [],
+    ];
 }
