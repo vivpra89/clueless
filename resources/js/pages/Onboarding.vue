@@ -77,9 +77,9 @@
                                 <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
                                         Need an API key? 
-                                        <a href="https://platform.openai.com/api-keys" target="_blank" class="font-medium text-gray-900 underline hover:text-gray-700 dark:text-gray-100 dark:hover:text-gray-300">
+                                        <button @click="openOpenAI" class="font-medium text-gray-900 underline hover:text-gray-700 dark:text-gray-100 dark:hover:text-gray-300">
                                             Get one from OpenAI
-                                        </a>
+                                        </button>
                                     </p>
                                 </div>
                             </div>
@@ -235,6 +235,19 @@ const openGitHub = async () => {
         // Fallback for web browser
         window.open('https://github.com/vijaythecoder/clueless', '_blank')
         hasStarred.value = true
+    }
+}
+
+const openOpenAI = async () => {
+    try {
+        // Use NativePHP API endpoint to open in default browser
+        await axios.post('/api/open-external', {
+            url: 'https://platform.openai.com/api-keys'
+        })
+    } catch (error) {
+        console.error('Failed to open OpenAI:', error)
+        // Fallback for web browser
+        window.open('https://platform.openai.com/api-keys', '_blank')
     }
 }
 
