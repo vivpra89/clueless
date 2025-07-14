@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ApiKeyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class RealtimeController extends Controller
@@ -30,13 +31,29 @@ class RealtimeController extends Controller
                 ], 422);
             }
 
-            // Return the actual API key for now
-            // OpenAI Realtime API uses the API key directly in WebSocket connection
+            // Generate ephemeral key from OpenAI Realtime API
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.openai.com/v1/realtime/sessions', [
+                'model' => 'gpt-4o-realtime-preview-2024-12-17',
+                'voice' => $request->input('voice', 'alloy'),
+            ]);
+
+            if (!$response->successful()) {
+                Log::error('OpenAI API error: ' . $response->body());
+                throw new \Exception('Failed to generate ephemeral key from OpenAI: ' . $response->status());
+            }
+
+            $data = $response->json();
+            
+            // Return ephemeral key data
             return response()->json([
                 'status' => 'success',
-                'ephemeralKey' => $apiKey, // Use actual API key
-                'expiresAt' => now()->addMinutes(60)->toIso8601String(),
-                'model' => 'gpt-4o-realtime-preview-2024-12-17',
+                'ephemeralKey' => $data['client_secret']['value'],
+                'expiresAt' => $data['client_secret']['expires_at'],
+                'sessionId' => $data['id'],
+                'model' => $data['model'],
             ]);
 
         } catch (\Exception $e) {
