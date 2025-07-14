@@ -14,6 +14,11 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+// Onboarding Route
+Route::get('/onboarding', function () {
+    return Inertia::render('Onboarding');
+})->name('onboarding');
+
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->name('dashboard');
@@ -39,6 +44,21 @@ Route::get('/api/openai/status', function () {
         'hasApiKey' => $apiKeyService->hasApiKey(),
     ]);
 })->name('api.openai.status');
+
+// Open external URL in default browser (for NativePHP)
+Route::post('/api/open-external', function (\Illuminate\Http\Request $request) {
+    $url = $request->input('url');
+    
+    // Validate URL
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return response()->json(['error' => 'Invalid URL'], 400);
+    }
+    
+    // Use NativePHP Shell to open in default browser
+    \Native\Laravel\Facades\Shell::openExternal($url);
+    
+    return response()->json(['success' => true]);
+})->name('api.open-external');
 
 // Template Routes
 Route::get('/templates', [\App\Http\Controllers\TemplateController::class, 'index'])

@@ -9,6 +9,9 @@ Route::get('settings/api-keys', [ApiKeyController::class, 'edit'])->name('api-ke
 Route::put('settings/api-keys', [ApiKeyController::class, 'update'])->name('api-keys.update');
 Route::delete('settings/api-keys', [ApiKeyController::class, 'destroy'])->name('api-keys.destroy');
 
+// API endpoint for saving API key (used by onboarding)
+Route::post('/api/openai/api-key', [ApiKeyController::class, 'store'])->name('api.openai.api-key.store');
+
 Route::get('settings/appearance', function () {
     return Inertia::render('settings/Appearance');
 })->name('appearance');
