@@ -2657,7 +2657,7 @@ onMounted(async () => {
     try {
         const response = await axios.get('/api/openai/status');
         hasApiKey.value = response.data.hasApiKey;
-        
+
         if (!hasApiKey.value) {
             // Redirect to settings page if no API key
             window.location.href = '/settings/api-keys';

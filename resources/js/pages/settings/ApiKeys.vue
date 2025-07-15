@@ -124,7 +124,10 @@ const deleteApiKey = () => {
                                 </p>
                             </div>
 
-                            <div v-if="form.errors.openai_api_key" class="flex items-center gap-2 rounded-md border border-red-500 bg-red-50 p-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200">
+                            <div
+                                v-if="form.errors.openai_api_key"
+                                class="flex items-center gap-2 rounded-md border border-red-500 bg-red-50 p-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200"
+                            >
                                 <AlertCircle class="h-4 w-4" />
                                 <span>{{ form.errors.openai_api_key }}</span>
                             </div>

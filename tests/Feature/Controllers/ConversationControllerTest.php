@@ -3,8 +3,14 @@
 use App\Models\ConversationSession;
 use App\Models\ConversationTranscript;
 use App\Models\ConversationInsight;
+use App\Services\ApiKeyService;
 
 beforeEach(function () {
+    // Mock API key service to return true (API key exists) for all conversation tests
+    $mockApiKeyService = Mockery::mock(ApiKeyService::class);
+    $mockApiKeyService->shouldReceive('hasApiKey')->andReturn(true);
+    $this->app->instance(ApiKeyService::class, $mockApiKeyService);
+    
     // Create a test conversation session for some tests
     $this->session = ConversationSession::create([
         'user_id' => null,
