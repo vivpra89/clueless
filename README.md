@@ -98,6 +98,10 @@ Contributions are welcome! Please check out our [Contributing Guide](CONTRIBUTIN
 - Pull request process
 - Testing guidelines
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=vijaythecoder/clueless&type=Date)](https://www.star-history.com/#vijaythecoder/clueless&Date)
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE) with the [Commons Clause](COMMONS_CLAUSE.md).
