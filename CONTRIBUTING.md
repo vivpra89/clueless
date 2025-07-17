@@ -87,15 +87,53 @@ Unsure where to begin contributing? You can start by looking through these issue
    php artisan migrate --database=nativephp
    ```
 
-5. **Add your OpenAI API key to `.env`:**
+5. **Add your API keys to `.env`:**
    ```
-   OPENAI_API_KEY=your-api-key-here
+   OPENAI_API_KEY=your-openai-api-key-here
+   ANTHROPIC_API_KEY=your-anthropic-api-key-here
+   GEMINI_API_KEY=your-gemini-api-key-here
+   NATIVEPHP_APP_ID=com.yourcompany.yourapp
    ```
 
 6. **Run the development server:**
    ```bash
    composer dev
    ```
+
+## 🔐 Code Signing & Security
+
+### For Contributors (Development)
+
+**You don't need Apple Developer certificates for contributing!** The project automatically creates unsigned builds for development, which are perfect for testing your changes.
+
+If you see warnings like this, it's completely normal:
+```
+⚠️  No code signing certificate found - creating unsigned build
+💡 To create signed builds, install an Apple Developer certificate in Keychain
+```
+
+### Security Guidelines
+
+**❌ NEVER commit these:**
+- `.env` file with real credentials
+- Certificate files (`.cer`, `.p12`)
+- Apple Developer credentials
+- Real API keys
+
+**✅ SAFE to commit:**
+- `.env.example` (template only)
+- Source code
+- Build scripts (auto-detect certificates)
+- Documentation
+
+### Before Committing
+
+Always verify no sensitive data:
+```bash
+git status
+git diff --cached
+grep -r "your-actual-api-key" . --exclude-dir=vendor
+```
 
 ## Pull Request Process
 
