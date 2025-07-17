@@ -90,8 +90,6 @@ Unsure where to begin contributing? You can start by looking through these issue
 5. **Add your API keys to `.env`:**
    ```
    OPENAI_API_KEY=your-openai-api-key-here
-   ANTHROPIC_API_KEY=your-anthropic-api-key-here
-   GEMINI_API_KEY=your-gemini-api-key-here
    NATIVEPHP_APP_ID=com.yourcompany.yourapp
    ```
 
