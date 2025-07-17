@@ -131,6 +131,7 @@ This project follows security best practices:
 **Minimal Entitlements**: The `entitlements.plist` file uses the principle of least privilege, requesting only:
 - `com.apple.security.device.audio-input` - For audio input access
 - `com.apple.security.device.microphone` - For microphone access
+- `com.apple.security.device.screen-capture` - Required for ScreenCaptureKit system audio capture
 
 **Removed Dangerous Entitlements**: We explicitly avoid these high-risk permissions:
 - `com.apple.security.cs.allow-jit` - Unnecessary JIT compilation

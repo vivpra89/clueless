@@ -16,7 +16,21 @@
     <key>com.apple.security.device.microphone</key>
     <true/>
     
+    <!-- Required for ScreenCaptureKit to capture system audio -->
+    <key>com.apple.security.device.screen-capture</key>
+    <true/>
+    
     <!--
+    SECURITY NOTE: Screen Recording Entitlement Explained
+    
+    The screen-capture entitlement is required because this app uses ScreenCaptureKit
+    to capture system audio for meeting transcription. ScreenCaptureKit requires
+    screen recording permissions even when only capturing audio, as it's part of
+    the unified screen capture API introduced in macOS 13.0.
+    
+    This is a legitimate use case for meeting transcription apps that need to
+    capture system audio (e.g., from video calls, presentations, etc.).
+    
     REMOVED DANGEROUS ENTITLEMENTS (Security Assessment):
     - com.apple.security.cs.allow-jit (JIT compilation not needed)
     - com.apple.security.cs.allow-unsigned-executable-memory (major security risk)
