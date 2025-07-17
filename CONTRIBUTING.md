@@ -124,6 +124,20 @@ If you see warnings like this, it's completely normal:
 - Build scripts (auto-detect certificates)
 - Documentation
 
+### Security Hardening
+
+This project follows security best practices:
+
+**Minimal Entitlements**: The `entitlements.plist` file uses the principle of least privilege, requesting only:
+- `com.apple.security.device.audio-input` - For audio input access
+- `com.apple.security.device.microphone` - For microphone access
+
+**Removed Dangerous Entitlements**: We explicitly avoid these high-risk permissions:
+- `com.apple.security.cs.allow-jit` - Unnecessary JIT compilation
+- `com.apple.security.cs.allow-unsigned-executable-memory` - Memory injection risk
+- `com.apple.security.cs.disable-executable-page-protection` - Memory corruption risk  
+- `com.apple.security.cs.disable-library-validation` - Library injection risk
+
 ### Before Committing
 
 Always verify no sensitive data:

@@ -2,17 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>com.apple.security.cs.allow-jit</key>
-    <true/>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-    <key>com.apple.security.cs.disable-executable-page-protection</key>
-    <true/>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
+    <!-- 
+    SECURITY HARDENED ENTITLEMENTS
+    Following principle of least privilege - only requesting minimal permissions
+    required for audio capture functionality.
+    -->
+    
+    <!-- Required for accessing audio input devices for meeting transcription -->
     <key>com.apple.security.device.audio-input</key>
     <true/>
+    
+    <!-- Required for accessing microphone for real-time audio capture -->
     <key>com.apple.security.device.microphone</key>
     <true/>
+    
+    <!--
+    REMOVED DANGEROUS ENTITLEMENTS (Security Assessment):
+    - com.apple.security.cs.allow-jit (JIT compilation not needed)
+    - com.apple.security.cs.allow-unsigned-executable-memory (major security risk)
+    - com.apple.security.cs.disable-executable-page-protection (memory corruption risk)
+    - com.apple.security.cs.disable-library-validation (library injection risk)
+    
+    These entitlements were removed to maintain macOS security protections
+    while preserving all required functionality for audio capture.
+    -->
 </dict>
 </plist>
