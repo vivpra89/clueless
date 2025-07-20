@@ -69,11 +69,11 @@
                         <div
                             class="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 flex-1 overflow-y-auto"
                         >
-                            <div v-if="filteredCoachingTemplates.length === 0" class="p-3 text-center text-xs text-gray-600 dark:text-gray-400">
+                            <div v-if="filteredTemplates.length === 0" class="p-3 text-center text-xs text-gray-600 dark:text-gray-400">
                                 No templates found
                             </div>
                             <div
-                                v-for="template in filteredCoachingTemplates"
+                                v-for="template in filteredTemplates"
                                 :key="template.id"
                                 @click="
                                     selectTemplateFromDropdown(template);
@@ -251,11 +251,11 @@
                             @click.stop
                         />
                         <div class="max-h-36 overflow-y-auto">
-                            <div v-if="filteredCoachingTemplates.length === 0" class="p-2 text-center text-xs text-gray-600 dark:text-gray-400">
+                            <div v-if="filteredTemplates.length === 0" class="p-2 text-center text-xs text-gray-600 dark:text-gray-400">
                                 No templates found
                             </div>
                             <button
-                                v-for="template in filteredCoachingTemplates"
+                                v-for="template in filteredTemplates"
                                 :key="template.id"
                                 @click.stop="
                                     selectTemplateFromDropdown(template);
@@ -902,19 +902,17 @@ const { isOverlayMode, isSupported: isOverlaySupported, toggleOverlayMode } = us
 const hasApiKey = ref(false); // Will be checked on mount
 // const isDev = computed(() => import.meta.env.DEV)
 
-// Coaching templates filtered - expanded to include more relevant categories
-const coachingTemplates = computed(() => {
-    // Include multiple relevant categories for broader template selection
-    const relevantCategories = ['sales_coach', 'customer_success', 'executive', 'support', 'partnership', 'technical'];
-    return templates.value.filter((t) => relevantCategories.includes(t.category));
+// All available templates (no category filtering)
+const allTemplates = computed(() => {
+    return templates.value;
 });
 
 // Filtered templates based on search
-const filteredCoachingTemplates = computed(() => {
-    if (!templateSearchQuery.value) return coachingTemplates.value;
+const filteredTemplates = computed(() => {
+    if (!templateSearchQuery.value) return allTemplates.value;
 
     const query = templateSearchQuery.value.toLowerCase();
-    return coachingTemplates.value.filter((t) => t.name.toLowerCase().includes(query) || t.description?.toLowerCase().includes(query));
+    return allTemplates.value.filter((t) => t.name.toLowerCase().includes(query) || t.description?.toLowerCase().includes(query));
 });
 
 // New computed properties for intelligence dashboard
@@ -2512,10 +2510,8 @@ const fetchTemplates = async () => {
 
         console.log(`✅ Loaded ${templates.value.length} templates`);
         console.log(
-            'Available coaching templates:',
-            templates.value
-                .filter((t) => ['sales_coach', 'customer_success', 'executive', 'support', 'partnership', 'technical'].includes(t.category))
-                .map((t) => t.name),
+            'Available templates:',
+            templates.value.map((t) => t.name),
         );
 
         // Load persisted template or select default
@@ -2530,9 +2526,8 @@ const fetchTemplates = async () => {
 
         // Select default template if none selected
         if (!selectedTemplate.value && templates.value.length > 0) {
-            // Try to find the Sales Discovery Call template as default, otherwise use first available coaching template
-            const defaultTemplate =
-                templates.value.find((t) => t.name === 'Sales Discovery Call') || coachingTemplates.value[0] || templates.value[0];
+            // Try to find the Sales Discovery Call template as default, otherwise use first available template
+            const defaultTemplate = templates.value.find((t) => t.name === 'Sales Discovery Call') || templates.value[0];
             if (defaultTemplate) {
                 selectedTemplate.value = defaultTemplate;
                 console.log('📌 Selected default template:', defaultTemplate.name);
