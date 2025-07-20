@@ -1,11 +1,13 @@
 @import 'tailwindcss';
 
+/* Tell Tailwind CSS v4 where to look for utility classes */
+@source "../js/**/*.{js,ts,vue}";
+
 @import 'tw-animate-css';
 
 /* Realtime agent styles removed - using unified design system */
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+/* Tailwind v4 with Vite automatically detects source files */
 
 @custom-variant dark (&:is(.dark *));
 
