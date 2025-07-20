@@ -27,9 +27,6 @@
     },
     "dependencies": {
         "@inertiajs/vue3": "^2.0.0",
-        "@openai/agents": "^0.0.10",
-        "@openai/agents-realtime": "^0.0.10",
-        "@openai/realtime-api-beta": "github:openai/openai-realtime-api-beta",
         "@tailwindcss/vite": "^4.1.1",
         "@types/dompurify": "^3.0.5",
         "@vitejs/plugin-vue": "^5.2.1",

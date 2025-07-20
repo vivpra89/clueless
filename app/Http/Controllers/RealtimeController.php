@@ -36,7 +36,7 @@ class RealtimeController extends Controller
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->post('https://api.openai.com/v1/realtime/sessions', [
-                'model' => 'gpt-4o-realtime-preview-2024-12-17',
+                'model' => 'gpt-4o-mini-realtime-preview-2024-12-17',
                 'voice' => $request->input('voice', 'alloy'),
             ]);
 
@@ -59,7 +59,7 @@ class RealtimeController extends Controller
                 'ephemeralKey' => $data['client_secret']['value'],
                 'expiresAt' => $data['client_secret']['expires_at'],
                 'sessionId' => $data['id'] ?? null,
-                'model' => $data['model'] ?? 'gpt-4o-realtime-preview-2024-12-17',
+                'model' => $data['model'] ?? 'gpt-4o-mini-realtime-preview-2024-12-17',
             ]);
 
         } catch (\Exception $e) {

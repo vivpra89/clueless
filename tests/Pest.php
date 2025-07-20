@@ -60,7 +60,7 @@ function mockEphemeralKeyResponse(): array
     return [
         'id' => 'sess_' . uniqid(),
         'object' => 'realtime.session',
-        'model' => 'gpt-4o-realtime-preview-2024-12-17',
+        'model' => 'gpt-4o-mini-realtime-preview-2024-12-17',
         'client_secret' => [
             'value' => 'ek_' . bin2hex(random_bytes(32)),
             'expires_at' => time() + 7200, // 2 hours from now
