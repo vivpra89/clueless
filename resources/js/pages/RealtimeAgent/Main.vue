@@ -2525,12 +2525,18 @@ const fetchTemplates = async () => {
         }
 
         // Select default template if none selected
-        if (!selectedTemplate.value && templates.value.length > 0) {
-            // Try to find the Sales Discovery Call template as default, otherwise use first available template
-            const defaultTemplate = templates.value.find((t) => t.name === 'Sales Discovery Call') || templates.value[0];
-            if (defaultTemplate) {
-                selectedTemplate.value = defaultTemplate;
-                console.log('📌 Selected default template:', defaultTemplate.name);
+        if (!selectedTemplate.value) {
+            if (templates.value.length > 0) {
+                // Try to find the Sales Discovery Call template as default, otherwise use first available template
+                const defaultTemplate = templates.value.find((t) => t.name === 'Sales Discovery Call') || templates.value[0];
+                if (defaultTemplate) {
+                    selectedTemplate.value = defaultTemplate;
+                    console.log('📌 Selected default template:', defaultTemplate.name);
+                }
+            } else {
+                // Handle case when no templates exist
+                console.warn('⚠️ No templates available - cannot select default template');
+                // You may want to show a user-friendly message or redirect to template creation
             }
         }
     } catch (error) {

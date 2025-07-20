@@ -63,13 +63,25 @@ const editTemplate = (templateId: string) => {
 };
 
 const deleteTemplate = async (template: Template) => {
-    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
+    // Enhanced confirmation for system templates
+    let confirmMessage = `Are you sure you want to delete "${template.name}"?`;
+    if (template.is_system) {
+        confirmMessage = `⚠️ WARNING: You are about to delete a built-in system template!\n\n"${template.name}" is a pre-configured template that may be useful for many users.\n\nAre you absolutely sure you want to permanently delete this system template?`;
+    }
+
+    if (confirm(confirmMessage)) {
         try {
             await axios.delete(route('templates.destroy', template.id));
             await fetchTemplates();
         } catch (error) {
             console.error('Failed to delete template:', error);
-            alert('Failed to delete template. Please try again.');
+
+            // Handle specific error messages from backend
+            if (error.response?.status === 422 && error.response?.data?.error) {
+                alert(error.response.data.error);
+            } else {
+                alert('Failed to delete template. Please try again.');
+            }
         }
     }
 };
