@@ -7,7 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Copy, FileText, Plus } from 'lucide-vue-next';
+import { FileText, Plus } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 
 interface Template {
@@ -60,29 +60,6 @@ const createTemplate = () => {
 
 const editTemplate = (templateId: string) => {
     router.visit(`/templates/${templateId}/edit`);
-};
-
-const copyTemplate = async (template: Template) => {
-    try {
-        const copiedTemplate = {
-            name: `${template.name} (Copy)`,
-            description: template.description,
-            prompt: template.prompt,
-            icon: template.icon,
-            category: template.category,
-            variables: template.variables,
-            talking_points: template.talking_points,
-            additional_info: template.additional_info,
-            is_system: false, // Make sure copied templates are not system templates
-        };
-
-        await axios.post(route('templates.store'), copiedTemplate);
-        await fetchTemplates();
-        alert(`Template "${template.name}" copied successfully!`);
-    } catch (error) {
-        console.error('Failed to copy template:', error);
-        alert('Failed to copy template. Please try again.');
-    }
 };
 
 const deleteTemplate = async (template: Template) => {
@@ -185,26 +162,11 @@ onMounted(() => {
                     </p>
 
                     <div class="flex items-center gap-2">
-                        <!-- Copy button for system templates -->
-                        <Button v-if="template.is_system" size="sm" variant="outline" @click="copyTemplate(template)">
-                            <Copy :size="14" class="mr-1" />
-                            Copy
-                        </Button>
+                        <!-- Edit button -->
+                        <Button size="sm" variant="outline" @click="editTemplate(template.id)"> Edit </Button>
 
-                        <!-- Edit button (disabled for system templates) -->
+                        <!-- Delete button -->
                         <Button
-                            size="sm"
-                            variant="outline"
-                            @click="editTemplate(template.id)"
-                            :disabled="template.is_system"
-                            :title="template.is_system ? 'System templates are read-only. Use Copy to create an editable version.' : 'Edit template'"
-                        >
-                            {{ template.is_system ? 'View' : 'Edit' }}
-                        </Button>
-
-                        <!-- Delete button (only for user templates) -->
-                        <Button
-                            v-if="!template.is_system"
                             size="sm"
                             variant="outline"
                             @click="deleteTemplate(template)"

@@ -101,11 +101,6 @@ class TemplateController extends Controller
 
     public function destroy(Template $template)
     {
-        // Only allow deleting non-system templates
-        if ($template->is_system) {
-            return response()->json(['error' => 'Cannot delete system templates'], 403);
-        }
-
         $template->delete();
 
         return response()->json([
