@@ -19,6 +19,9 @@ interface Template {
     category: string;
     is_system: boolean;
     usage_count: number;
+    variables?: Record<string, string>;
+    talking_points?: string[];
+    additional_info?: Record<string, any>;
     created_at: string;
     updated_at: string;
 }
@@ -52,21 +55,33 @@ const fetchTemplates = async () => {
 };
 
 const createTemplate = () => {
-    router.visit('/realtime-agent/templates/create');
+    router.visit('/templates/create');
 };
 
 const editTemplate = (templateId: string) => {
-    router.visit(`/realtime-agent/templates/${templateId}/edit`);
+    router.visit(`/templates/${templateId}/edit`);
 };
 
 const deleteTemplate = async (template: Template) => {
-    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
+    // Enhanced confirmation for system templates
+    let confirmMessage = `Are you sure you want to delete "${template.name}"?`;
+    if (template.is_system) {
+        confirmMessage = `⚠️ WARNING: You are about to delete a built-in system template!\n\n"${template.name}" is a pre-configured template that may be useful for many users.\n\nAre you absolutely sure you want to permanently delete this system template?`;
+    }
+
+    if (confirm(confirmMessage)) {
         try {
             await axios.delete(route('templates.destroy', template.id));
             await fetchTemplates();
         } catch (error) {
             console.error('Failed to delete template:', error);
-            alert('Failed to delete template. Please try again.');
+
+            // Handle specific error messages from backend
+            if (error.response?.status === 422 && error.response?.data?.error) {
+                alert(error.response.data.error);
+            } else {
+                alert('Failed to delete template. Please try again.');
+            }
         }
     }
 };
@@ -159,12 +174,14 @@ onMounted(() => {
                     </p>
 
                     <div class="flex items-center gap-2">
-                        <Button size="sm" variant="outline" @click="editTemplate(template.id)" :disabled="template.is_system"> Edit </Button>
+                        <!-- Edit button -->
+                        <Button size="sm" variant="outline" @click="editTemplate(template.id)"> Edit </Button>
+
+                        <!-- Delete button -->
                         <Button
                             size="sm"
                             variant="outline"
                             @click="deleteTemplate(template)"
-                            :disabled="template.is_system"
                             class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                             Delete

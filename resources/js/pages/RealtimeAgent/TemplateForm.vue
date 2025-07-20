@@ -142,7 +142,7 @@ const saveTemplate = async () => {
 };
 
 const cancel = () => {
-    router.visit('/realtime-agent/settings');
+    router.visit('/templates');
 };
 </script>
 

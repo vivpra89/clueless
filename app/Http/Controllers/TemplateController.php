@@ -101,9 +101,12 @@ class TemplateController extends Controller
 
     public function destroy(Template $template)
     {
-        // Only allow deleting non-system templates
-        if ($template->is_system) {
-            return response()->json(['error' => 'Cannot delete system templates'], 403);
+        // Prevent deletion if this is the last template
+        $remainingTemplatesCount = Template::where('id', '!=', $template->id)->count();
+        if ($remainingTemplatesCount === 0) {
+            return response()->json([
+                'error' => 'Cannot delete the last remaining template. At least one template must exist.'
+            ], 422);
         }
 
         $template->delete();
