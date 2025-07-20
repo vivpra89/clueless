@@ -29,9 +29,6 @@ Route::get('/realtime-agent', function () {
     return Inertia::render('RealtimeAgent/Main');
 })->name('realtime-agent');
 
-Route::get('/realtime-agent/settings', function () {
-    return Inertia::render('RealtimeAgent/Settings');
-})->name('realtime-agent.settings');
 
 // Realtime API Routes
 Route::post('/api/realtime/ephemeral-key', [\App\Http\Controllers\RealtimeController::class, 'generateEphemeralKey'])
@@ -73,9 +70,9 @@ Route::post('/templates/{template}/use', [\App\Http\Controllers\TemplateControll
     ->name('templates.use');
 
 // Template Form Routes
-Route::get('/realtime-agent/templates/create', [\App\Http\Controllers\TemplateController::class, 'create'])
+Route::get('/templates/create', [\App\Http\Controllers\TemplateController::class, 'create'])
     ->name('templates.create');
-Route::get('/realtime-agent/templates/{template}/edit', [\App\Http\Controllers\TemplateController::class, 'edit'])
+Route::get('/templates/{template}/edit', [\App\Http\Controllers\TemplateController::class, 'edit'])
     ->name('templates.edit');
 
 // Conversation Routes (No auth required for desktop app)

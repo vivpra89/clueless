@@ -7,7 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { FileText, Plus } from 'lucide-vue-next';
+import { Copy, FileText, Plus } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 
 interface Template {
@@ -19,6 +19,9 @@ interface Template {
     category: string;
     is_system: boolean;
     usage_count: number;
+    variables?: Record<string, string>;
+    talking_points?: string[];
+    additional_info?: Record<string, any>;
     created_at: string;
     updated_at: string;
 }
@@ -52,11 +55,34 @@ const fetchTemplates = async () => {
 };
 
 const createTemplate = () => {
-    router.visit('/realtime-agent/templates/create');
+    router.visit('/templates/create');
 };
 
 const editTemplate = (templateId: string) => {
-    router.visit(`/realtime-agent/templates/${templateId}/edit`);
+    router.visit(`/templates/${templateId}/edit`);
+};
+
+const copyTemplate = async (template: Template) => {
+    try {
+        const copiedTemplate = {
+            name: `${template.name} (Copy)`,
+            description: template.description,
+            prompt: template.prompt,
+            icon: template.icon,
+            category: template.category,
+            variables: template.variables,
+            talking_points: template.talking_points,
+            additional_info: template.additional_info,
+            is_system: false, // Make sure copied templates are not system templates
+        };
+
+        await axios.post(route('templates.store'), copiedTemplate);
+        await fetchTemplates();
+        alert(`Template "${template.name}" copied successfully!`);
+    } catch (error) {
+        console.error('Failed to copy template:', error);
+        alert('Failed to copy template. Please try again.');
+    }
 };
 
 const deleteTemplate = async (template: Template) => {
@@ -159,12 +185,29 @@ onMounted(() => {
                     </p>
 
                     <div class="flex items-center gap-2">
-                        <Button size="sm" variant="outline" @click="editTemplate(template.id)" :disabled="template.is_system"> Edit </Button>
+                        <!-- Copy button for system templates -->
+                        <Button v-if="template.is_system" size="sm" variant="outline" @click="copyTemplate(template)">
+                            <Copy :size="14" class="mr-1" />
+                            Copy
+                        </Button>
+
+                        <!-- Edit button (disabled for system templates) -->
                         <Button
                             size="sm"
                             variant="outline"
-                            @click="deleteTemplate(template)"
+                            @click="editTemplate(template.id)"
                             :disabled="template.is_system"
+                            :title="template.is_system ? 'System templates are read-only. Use Copy to create an editable version.' : 'Edit template'"
+                        >
+                            {{ template.is_system ? 'View' : 'Edit' }}
+                        </Button>
+
+                        <!-- Delete button (only for user templates) -->
+                        <Button
+                            v-if="!template.is_system"
+                            size="sm"
+                            variant="outline"
+                            @click="deleteTemplate(template)"
                             class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                             Delete
