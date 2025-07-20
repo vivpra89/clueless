@@ -29,7 +29,7 @@ test('generateEphemeralKey returns success with valid API key', function () {
         ])
         ->assertJson([
             'status' => 'success',
-            'model' => 'gpt-4o-realtime-preview-2024-12-17',
+            'model' => 'gpt-4o-mini-realtime-preview-2024-12-17',
         ]);
     
     expect($response->json('ephemeralKey'))->toStartWith('ek_');

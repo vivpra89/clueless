@@ -93,7 +93,7 @@ php artisan test --testsuite=Feature
 - `/app/` - Laravel backend logic
   - `/Http/Controllers/` - Request handlers (Conversations, Realtime, Settings)
   - `/Models/` - Eloquent models (Conversation, Transcript, etc.)
-  - `/Services/` - Business logic (ApiKeyService, RealtimeRelayService, TranscriptionService)
+  - `/Services/` - Business logic (ApiKeyService, TranscriptionService)
   - `/Providers/` - Service providers
 - `/resources/js/` - Vue frontend application
   - `/components/` - Reusable Vue components
@@ -191,11 +191,24 @@ Example usage:
 
 ## Working with Real-time Features
 
-The application uses OpenAI's Realtime API for live transcription:
-- Frontend audio capture: `/resources/js/services/audioCaptureService.ts`
-- WebSocket client: `/resources/js/services/realtimeClient.ts`
-- Backend relay service: `/app/Services/RealtimeRelayService.php`
-- Controllers: `/app/Http/Controllers/RealtimeController.php`
+The application uses a **direct frontend WebSocket architecture** for optimal performance:
+
+### Architecture Overview
+- **Frontend Audio Capture**: `/resources/js/services/audioCaptureService.ts`
+- **Direct WebSocket Connections**: `/resources/js/pages/RealtimeAgent/Main.vue`
+  - Native WebSocket implementation connecting directly to OpenAI Realtime API
+  - Two separate connections: salesperson transcription + customer coach analysis
+  - Uses `gpt-4o-mini-transcribe` model for cost-effective transcription
+- **Backend Ephemeral Key Service**: `/app/Http/Controllers/RealtimeController.php`
+  - Generates secure temporary authentication keys
+  - No WebSocket relay - frontend connects directly to OpenAI
+
+### Data Flow
+```
+Frontend → Backend (ephemeral key) → Frontend → OpenAI (direct WebSocket)
+```
+
+This architecture provides lower latency and better scalability compared to backend relay approaches.
 
 ## API Key Management
 

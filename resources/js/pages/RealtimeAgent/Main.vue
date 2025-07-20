@@ -1138,7 +1138,7 @@ const startSession = async () => {
         }
 
         // Create TWO WebSocket connections for optimized architecture
-        const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17`;
+        const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17`;
 
         // 1. Salesperson Transcriber - Simple transcription only
         console.log('🎤 Connecting Salesperson Transcriber...');

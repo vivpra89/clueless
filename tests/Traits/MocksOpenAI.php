@@ -72,7 +72,7 @@ trait MocksOpenAI
         Http::fake([
             'api.openai.com/v1/realtime/sessions' => Http::response([
                 'id' => 'sess_123',
-                'model' => 'gpt-4o-realtime-preview-2024-12-17',
+                'model' => 'gpt-4o-mini-realtime-preview-2024-12-17',
                 // Missing client_secret structure
             ], 200),
         ]);
