@@ -73,14 +73,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { 
     RealtimeAgent,
     RealtimeSession,
     type RealtimeAgentConfiguration,
-    type RealtimeSessionOptions,
 } from '@openai/agents-realtime';
 import { tool } from '@openai/agents-core';
 import { z } from 'zod';
@@ -160,7 +159,6 @@ let coachSession: any = null;
 
 // Audio capture
 let audioCapture: any = null;
-let currentAudioData = ref<ArrayBuffer | null>(null);
 let audioContext: AudioContext | null = null;
 let micStream: MediaStream | null = null;
 let sessionsReady = false;
@@ -629,7 +627,7 @@ const setupSessionHandlers = () => {
         }
     });
     
-    coachSession.on('response.done', (event: any) => {
+    coachSession.on('response.done', () => {
         console.log('✅ Coach response complete');
     });
     
@@ -955,16 +953,6 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     return base64Audio;
 };
 
-const calculateAudioLevel = (audioData: ArrayBuffer): number => {
-    const dataArray = new Int16Array(audioData);
-    let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-        sum += Math.abs(dataArray[i]);
-    }
-    const average = sum / dataArray.length;
-    const normalized = average / 32768;
-    return Math.min(100, normalized * 500);
-};
 
 const handleDashboardClick = () => {
     if (!realtimeStore.isActive) {

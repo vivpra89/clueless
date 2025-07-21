@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { 
     type RealtimeAgent,
     type RealtimeSession,
-    type RealtimeAgentConfiguration,
     type RealtimeSessionOptions,
 } from '@openai/agents-realtime';
 

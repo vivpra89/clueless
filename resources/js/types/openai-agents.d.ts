@@ -30,7 +30,7 @@ declare module '@openai/agents' {
         on(event: 'error', handler: (error: any) => void): void;
         on(event: string, handler: (data: any) => void): void;
         
-        off(event: string, handler?: Function): void;
+        off(event: string, handler?: (...args: any[]) => void): void;
         
         sendAudio(audio: ArrayBuffer | Int16Array): void;
     }
@@ -58,8 +58,8 @@ declare module '@openai/agents/realtime/websocket' {
         
         send(data: any): void;
         
-        on(event: string, handler: Function): void;
-        off(event: string, handler?: Function): void;
+        on(event: string, handler: (...args: any[]) => void): void;
+        off(event: string, handler?: (...args: any[]) => void): void;
     }
 }
 

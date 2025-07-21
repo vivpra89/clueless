@@ -104,6 +104,7 @@ import OverlayModeToggle from './OverlayModeToggle.vue';
 import MockModeToggle from './MockModeToggle.vue';
 
 // Props
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = withDefaults(defineProps<{
     title?: string;
 }>(), {
