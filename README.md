@@ -102,6 +102,9 @@ Contributions are welcome! Please check out our [Contributing Guide](CONTRIBUTIN
 
 [![Star History Chart](https://api.star-history.com/svg?repos=vijaythecoder/clueless&type=Date)](https://www.star-history.com/#vijaythecoder/clueless&Date)
 
+## Stats
+![Alt](https://repobeats.axiom.co/api/embed/2dfb32df45f325d43afe9d5f8d83b06c9b29e542.svg "Repobeats analytics image")
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE) with the [Commons Clause](COMMONS_CLAUSE.md).
