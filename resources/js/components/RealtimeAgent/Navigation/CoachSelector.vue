@@ -1,6 +1,7 @@
 <template>
-    <div class="relative" @click.stop>
+    <div class="relative z-[100]" @click.stop>
         <button
+            ref="buttonRef"
             @click.stop="toggleDropdown"
             :disabled="isActive"
             class="flex items-center gap-1.5 text-xs text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
@@ -16,12 +17,14 @@
         </button>
 
         <!-- Coach Dropdown Menu -->
-        <div
-            v-if="showCoachDropdown"
-            @click.stop
-            data-dropdown
-            class="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-96 w-full flex-col rounded-lg bg-white shadow-xl md:right-0 md:left-auto md:w-80 dark:bg-gray-800"
-        >
+        <Teleport to="body">
+            <div
+                v-if="showCoachDropdown"
+                @click.stop
+                data-dropdown
+                :style="dropdownStyle"
+                class="fixed z-[9999] flex max-h-96 w-full flex-col rounded-lg bg-gray-50 shadow-xl md:w-80 dark:bg-gray-900"
+            >
             <!-- Search Input -->
             <div class="border-b border-gray-200 p-3 dark:border-gray-700">
                 <input
@@ -56,17 +59,22 @@
                 </div>
             </div>
         </div>
+        </Teleport>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onUnmounted, watch } from 'vue';
 import { useRealtimeAgentStore } from '@/stores/realtimeAgent';
 import { useSettingsStore } from '@/stores/settings';
 
 // Stores
 const realtimeStore = useRealtimeAgentStore();
 const settingsStore = useSettingsStore();
+
+// Refs
+const buttonRef = ref<HTMLElement>();
+const dropdownStyle = ref({});
 
 // Computed
 const isActive = computed(() => realtimeStore.isActive);
@@ -91,9 +99,87 @@ const filteredTemplates = computed(() => {
 });
 
 // Methods
+const updateDropdownPosition = () => {
+    if (!buttonRef.value || !showCoachDropdown.value) return;
+    
+    const rect = buttonRef.value.getBoundingClientRect();
+    const isMobile = window.innerWidth < 768;
+    
+    // Calculate position
+    const top = rect.bottom + 8; // 8px gap (mt-2)
+    let left = rect.left;
+    let width = rect.width;
+    
+    // On desktop, align to right edge and set fixed width
+    if (!isMobile) {
+        width = 320; // w-80 = 20rem = 320px
+        left = rect.right - width;
+        
+        // Ensure dropdown doesn't go off-screen on the left
+        if (left < 16) {
+            left = 16; // Add some padding from edge
+        }
+    }
+    
+    // Ensure dropdown doesn't go off-screen on the right
+    const maxRight = window.innerWidth - 16;
+    if (left + width > maxRight) {
+        left = maxRight - width;
+    }
+    
+    dropdownStyle.value = {
+        top: `${top}px`,
+        left: `${left}px`,
+        width: isMobile ? `${width}px` : `${width}px`,
+    };
+};
+
 const toggleDropdown = () => {
     settingsStore.toggleCoachDropdown();
+    if (!showCoachDropdown.value) {
+        // Update position when opening
+        setTimeout(updateDropdownPosition, 0);
+    }
 };
+
+// Update position on window resize
+const handleResize = () => {
+    if (showCoachDropdown.value) {
+        updateDropdownPosition();
+    }
+};
+
+// Handle click outside
+const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (!target.closest('[data-dropdown]') && !buttonRef.value?.contains(target)) {
+        settingsStore.closeAllDropdowns();
+    }
+};
+
+// Watch for dropdown visibility changes
+const stopWatcher = watch(showCoachDropdown, (isVisible) => {
+    if (isVisible) {
+        updateDropdownPosition();
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('scroll', updateDropdownPosition, true);
+        // Add click outside handler
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 0);
+    } else {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+        document.removeEventListener('click', handleClickOutside);
+    }
+});
+
+onUnmounted(() => {
+    stopWatcher();
+    window.removeEventListener('resize', handleResize);
+    window.removeEventListener('scroll', updateDropdownPosition, true);
+    document.removeEventListener('click', handleClickOutside);
+});
 
 const selectTemplate = (template: any) => {
     realtimeStore.setSelectedTemplate(template);

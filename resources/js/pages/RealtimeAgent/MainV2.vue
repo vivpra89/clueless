@@ -7,13 +7,6 @@
             'overlay-mode-active': isOverlayMode,
         }"
     >
-        <!-- Screen Protection Indicator -->
-        <div v-if="isProtectionEnabled" class="screen-protection-indicator">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Screen Recording Blocked</span>
-        </div>
 
         <!-- Professional Navigation Title Bar -->
         <TitleBar 
@@ -267,6 +260,8 @@ const coachingTools = [
 // Function call handler (same as original)
 const handleFunctionCall = (name: string, args: any) => {
     console.log('🔧 Handling function call:', name, args);
+    console.log('Current topics:', realtimeStore.topics.length);
+    console.log('Current insights:', realtimeStore.insights.length);
     
     switch (name) {
         case 'track_discussion_topic':
@@ -525,7 +520,19 @@ const initializeAgents = async (apiKey: string) => {
     
     // Configure coach session with tools
     if (coachSession?.transport) {
-        const coachInstructions = selectedTemplate.value?.prompt || 'You are a helpful sales coach.';
+        const basePrompt = selectedTemplate.value?.prompt || 'You are a helpful sales coach.';
+        const coachInstructions = `${basePrompt}
+
+CRITICAL: You must actively and continuously analyze EVERY piece of conversation in real-time:
+
+1. IMMEDIATELY track discussion topics as they are mentioned using track_discussion_topic
+2. INSTANTLY detect any commitments using detect_commitment - even tentative ones
+3. CONTINUOUSLY highlight insights using highlight_insight for any important points
+4. ALWAYS analyze customer intent with analyze_customer_intent after each customer statement
+5. PROACTIVELY detect information needs using detect_information_need
+
+Be EXTREMELY aggressive in calling these functions - it's better to over-analyze than miss something.
+Call multiple functions per statement if relevant. Don't wait for complete thoughts - analyze partial information.`;
         
         // Convert tools to the format expected by OpenAI
         const toolDefinitions = coachingTools.map(tool => ({
@@ -549,9 +556,9 @@ const initializeAgents = async (apiKey: string) => {
                 },
                 turn_detection: {
                     type: 'server_vad',
-                    threshold: 0.5,
-                    prefix_padding_ms: 300,
-                    silence_duration_ms: 200,
+                    threshold: 0.3,              // More sensitive to speech
+                    prefix_padding_ms: 200,      // Less padding before speech
+                    silence_duration_ms: 100,    // Shorter silence to trigger processing
                 },
                 voice: 'alloy',
                 temperature: 0.8,
@@ -597,63 +604,36 @@ const setupSessionHandlers = () => {
         });
     }
     
-    // Salesperson session handlers (transcription)
+    // Salesperson session handlers
     salespersonSession.on('conversation.updated', (event: any) => {
         console.log('Salesperson conversation updated:', event);
-        const { item } = event;
-        if (item.role === 'user' && item.formatted?.transcript) {
-            // Add salesperson transcript
-            const groupId = `salesperson-${Date.now()}`;
-            realtimeStore.addTranscriptGroup({
-                id: groupId,
-                role: 'salesperson',
-                messages: [{ text: item.formatted.transcript, timestamp: Date.now() }],
-                startTime: Date.now(),
-            });
-            
-            // Forward to coach for analysis
-            if (coachSession && coachSession.transport) {
-                coachSession.transport.sendEvent({
-                    type: 'conversation.item.create',
-                    item: {
-                        type: 'message',
-                        role: 'user',
-                        content: [{
-                            type: 'input_text',
-                            text: `Salesperson said: "${item.formatted.transcript}"`
-                        }]
-                    }
-                });
-            }
-        }
+        // Note: Transcript handling moved to conversation.item.input_audio_transcription.completed
     });
     
     // Coach session handlers
     coachSession.on('conversation.updated', (event: any) => {
         console.log('Coach conversation updated:', event);
-        const { item } = event;
-        
-        // Handle customer transcripts
-        if (item.role === 'user' && item.formatted?.transcript) {
-            const text = item.formatted.transcript;
-            
-            // Check if it's a customer message (not forwarded from salesperson)
-            if (!text.startsWith('Salesperson said:')) {
-                const groupId = `customer-${Date.now()}`;
-                realtimeStore.addTranscriptGroup({
-                    id: groupId,
-                    role: 'customer',
-                    messages: [{ text, timestamp: Date.now() }],
-                    startTime: Date.now(),
-                });
-                
-                // Update last customer message
-                realtimeStore.setLastCustomerMessage(text);
+        // Note: Transcript handling moved to conversation.item.input_audio_transcription.completed
+    });
+    
+    // Function call handlers for coach analytics
+    coachSession.on('response.function_call_arguments.done', (event: any) => {
+        console.log('✅ Coach function call complete:', event);
+        if (event.name && event.arguments) {
+            try {
+                const args = JSON.parse(event.arguments);
+                handleFunctionCall(event.name, args);
+            } catch (e) {
+                console.error('❌ Failed to parse function arguments:', e);
             }
         }
     });
     
-    // Handle transcription events
+    coachSession.on('response.done', (event: any) => {
+        console.log('✅ Coach response complete');
+    });
+    
+    // Handle transcription events - these are the primary events for capturing audio transcripts
     if (salespersonSession.transport) {
         salespersonSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
             console.log('Salesperson transcription completed:', event);
@@ -696,28 +676,19 @@ const setupSessionHandlers = () => {
                     startTime: Date.now(),
                 });
                 
-                // Update last customer message
+                // Update last customer message and context
                 realtimeStore.setLastCustomerMessage(event.transcript);
+                
+                // Update conversation context with recent messages
+                const recentTranscripts = realtimeStore.transcriptGroups
+                    .slice(-5)
+                    .map(g => `${g.role}: ${g.messages.map(m => m.text).join(' ')}`)
+                    .join('\n');
+                realtimeStore.setConversationContext(recentTranscripts);
             }
         });
     }
     
-    if (coachSession.transport) {
-        coachSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
-            console.log('Coach transcription completed:', event);
-            if (event.transcript) {
-                const groupId = `customer-${Date.now()}`;
-                realtimeStore.addTranscriptGroup({
-                    id: groupId,
-                    role: 'customer',
-                    messages: [{ text: event.transcript, timestamp: Date.now() }],
-                    startTime: Date.now(),
-                });
-                
-                realtimeStore.setLastCustomerMessage(event.transcript);
-            }
-        });
-    }
     
     // Error handlers
     salespersonSession.on('error', (error: any) => {
