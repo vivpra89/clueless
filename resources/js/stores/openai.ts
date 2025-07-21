@@ -103,14 +103,32 @@ export const useOpenAIStore = defineStore('openai', {
         },
         
         // Cleanup
-        async disconnectAllAgents() {
-            if (this.salespersonAgent?.session) {
-                await this.salespersonAgent.session.disconnect();
-                this.salespersonAgent.isConnected = false;
+        disconnectAllAgents() {
+            // Access raw objects to avoid Vue proxy issues
+            const rawSalespersonSession = this.salespersonAgent?.session;
+            const rawCoachSession = this.coachAgent?.session;
+            
+            if (rawSalespersonSession && typeof rawSalespersonSession.close === 'function') {
+                try {
+                    rawSalespersonSession.close();
+                } catch (error) {
+                    console.error('Error closing salesperson session:', error);
+                }
             }
             
-            if (this.coachAgent?.session) {
-                await this.coachAgent.session.disconnect();
+            if (rawCoachSession && typeof rawCoachSession.close === 'function') {
+                try {
+                    rawCoachSession.close();
+                } catch (error) {
+                    console.error('Error closing coach session:', error);
+                }
+            }
+            
+            // Update connection status
+            if (this.salespersonAgent) {
+                this.salespersonAgent.isConnected = false;
+            }
+            if (this.coachAgent) {
                 this.coachAgent.isConnected = false;
             }
         },

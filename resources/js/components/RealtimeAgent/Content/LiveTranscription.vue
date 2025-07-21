@@ -21,7 +21,7 @@
             <!-- Transcription Content - Reversed order, newest first -->
             <div
                 ref="transcriptContainer"
-                class="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent flex flex-1 flex-col-reverse overflow-y-auto p-4 pb-8"
+                class="transcript-scrollbar flex flex-1 flex-col-reverse overflow-y-auto p-4 pb-8"
             >
                 <div v-if="transcriptGroups.length === 0" class="py-12 text-center">
                     <p class="text-sm text-gray-600 dark:text-gray-400">Waiting for conversation to begin...</p>
@@ -30,28 +30,25 @@
                 <div
                     v-for="group in [...transcriptGroups].reverse()"
                     :key="group.id"
-                    class="mb-3"
+                    class="mb-3 flex"
                     :class="[
-                        'group relative',
-                        group.role === 'salesperson' ? 'pr-12 pl-0' : '',
-                        group.role === 'customer' ? 'pr-0 pl-12' : '',
-                        group.role === 'system' ? 'pr-6 pl-6' : '',
+                        group.role === 'salesperson' ? 'justify-end' : '',
+                        group.role === 'customer' ? 'justify-start' : '',
+                        group.role === 'system' ? 'justify-center' : '',
                     ]"
                 >
                     <div
                         :class="[
-                            'animate-fadeIn mb-2 rounded-lg p-3',
-                            group.role === 'salesperson' ? 'bg-blue-50 text-right dark:bg-blue-900/20' : '',
-                            group.role === 'customer' ? 'bg-gray-50 text-left dark:bg-gray-800' : '',
-                            group.role === 'system' ? 'bg-yellow-50 text-center text-sm dark:bg-yellow-900/20' : '',
+                            'animate-fadeIn inline-block max-w-[70%] rounded-lg border p-3 shadow-sm',
+                            group.role === 'salesperson' ? 'border-blue-50 bg-blue-50 text-left dark:border-blue-900/20 dark:bg-blue-900/20' : '',
+                            group.role === 'customer' ? 'border-gray-200 bg-gray-100 text-left dark:border-gray-700 dark:bg-gray-700' : '',
+                            group.role === 'system' ? 'border-yellow-100 bg-yellow-50 text-center text-sm dark:border-yellow-900/20 dark:bg-yellow-900/20' : ''
                         ]"
                     >
-                        <div class="flex-1">
-                            <p v-for="(msg, idx) in group.messages" :key="idx" :class="{ 'mt-1': idx > 0 }">
-                                {{ msg.text }}
-                            </p>
+                        <div class="min-w-0">
+                            <p class="whitespace-pre-wrap break-words">{{ group.messages.map(msg => msg.text).join(' ') }}</p>
                         </div>
-                        <span class="mt-2 block text-xs text-gray-600 dark:text-gray-400">
+                        <span class="mt-2 block text-xs text-gray-500 dark:text-gray-400">
                             {{ formatTime(group.startTime) }}
                         </span>
                     </div>

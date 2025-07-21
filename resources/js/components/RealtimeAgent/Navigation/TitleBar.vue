@@ -50,6 +50,9 @@
 
             <!-- Overlay Mode Toggle -->
             <OverlayModeToggle v-if="isOverlaySupported" />
+            
+            <!-- Mock Mode Toggle -->
+            <MockModeToggle />
 
             <!-- Actions -->
             <button
@@ -98,6 +101,7 @@ import CoachSelector from './CoachSelector.vue';
 import ConnectionStatus from './ConnectionStatus.vue';
 import ScreenProtectionToggle from './ScreenProtectionToggle.vue';
 import OverlayModeToggle from './OverlayModeToggle.vue';
+import MockModeToggle from './MockModeToggle.vue';
 
 // Props
 const props = withDefaults(defineProps<{

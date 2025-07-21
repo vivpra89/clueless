@@ -40,19 +40,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
+import { useScreenProtection } from '@/composables/useScreenProtection';
 
 // Store
 const settingsStore = useSettingsStore();
 
+// Screen protection composable
+const screenProtection = useScreenProtection();
+
 // Computed
-const isProtectionSupported = computed(() => settingsStore.isProtectionSupported);
-const isProtectionEnabled = computed(() => settingsStore.isProtectionEnabled);
-const protectionStatusText = computed(() => settingsStore.protectionStatusText);
+const isProtectionSupported = computed(() => screenProtection.isProtectionSupported.value);
+const isProtectionEnabled = computed(() => screenProtection.isProtectionEnabled.value);
+const protectionStatusText = computed(() => {
+    if (!isProtectionSupported.value) return 'N/A';
+    return isProtectionEnabled.value ? 'Protected' : 'Protect';
+});
+
+// Sync protection state with settings store
+watch(screenProtection.isProtectionEnabled, (enabled) => {
+    settingsStore.isProtectionEnabled = enabled;
+});
+
+watch(screenProtection.isProtectionSupported, (supported) => {
+    settingsStore.setProtectionSupported(supported);
+});
 
 // Methods
 const toggleProtection = () => {
-    settingsStore.toggleProtection();
+    // Use the actual screen protection composable to toggle
+    screenProtection.toggleProtection();
 };
 </script>
