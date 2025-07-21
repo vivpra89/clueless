@@ -55,7 +55,7 @@ const footerNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link href="/realtime-agent">
+                        <Link href="/realtime-agent-v2">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
