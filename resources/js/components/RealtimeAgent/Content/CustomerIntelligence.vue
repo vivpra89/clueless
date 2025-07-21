@@ -1,6 +1,6 @@
 <template>
     <div
-        class="rounded-lg border border-gray-200 bg-white p-4 transition-all duration-300 dark:border-gray-700 dark:bg-gray-800"
+        class="rounded-lg border border-gray-200 bg-gray-50 p-4 transition-all duration-300 dark:border-gray-700 dark:bg-gray-900"
         :class="{ 'animate-fadeIn': intelligenceUpdating }"
     >
         <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">

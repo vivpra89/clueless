@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+        class="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900"
     >
         <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Contextual Information</h3>

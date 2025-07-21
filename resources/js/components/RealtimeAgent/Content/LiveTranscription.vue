@@ -1,6 +1,6 @@
 <template>
     <div class="col-span-1 h-full">
-        <div class="flex h-full flex-col rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <div class="flex h-full flex-col rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
             <!-- Transcription Header -->
             <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                 <div class="flex items-center justify-between">

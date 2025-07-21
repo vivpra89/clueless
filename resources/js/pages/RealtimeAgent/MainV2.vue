@@ -31,40 +31,42 @@
             <div v-if="isProtectionEnabled" class="screen-protection-content-overlay" aria-hidden="true"></div>
             
             <!-- Main Content Area with Responsive Columns -->
-            <div class="grid h-full grid-cols-1 grid-rows-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <!-- Mobile/Tablet: Stack all columns vertically -->
+            <!-- Desktop: 3 columns side by side -->
+            <div class="flex h-full flex-col gap-3 lg:grid lg:grid-cols-3">
                 <!-- Column 1: Live Transcription -->
-                <LiveTranscription />
+                <LiveTranscription class="min-h-[300px] lg:min-h-0" />
 
                 <!-- Column 2: Real-time Intelligence -->
-                <div class="col-span-1 flex h-full flex-col gap-3">
+                <div class="flex flex-col gap-3">
                     <!-- Customer Intelligence Card -->
                     <CustomerIntelligence class="flex-shrink-0" />
 
                     <!-- Key Insights Card -->
-                    <KeyInsights class="flex-1 min-h-0" />
+                    <KeyInsights class="min-h-[200px] flex-1 lg:min-h-0" />
 
                     <!-- Post-Call Actions Card (moved from column 3) -->
-                    <PostCallActions class="flex-1 min-h-0" />
+                    <PostCallActions class="min-h-[150px] flex-1 lg:min-h-0" />
 
                     <!-- Talking Points Card -->
                     <TalkingPoints class="flex-shrink-0" />
                 </div>
 
                 <!-- Column 3: Contextual & Actions -->
-                <div class="col-span-1 flex h-full flex-col gap-3 md:col-span-2 xl:col-span-1">
+                <div class="flex flex-col gap-3">
                     <!-- Contextual Information Card (50%) -->
                     <ContextualInformation
                         :prompt="selectedTemplate?.prompt || ''"
                         :conversation-context="conversationContext"
                         :last-customer-message="lastCustomerMessage"
-                        class="flex-[5] min-h-0"
+                        class="min-h-[250px] flex-[5] lg:min-h-0"
                     />
 
                     <!-- Commitments Made Card (30%) -->
-                    <CommitmentsList class="flex-[3] min-h-0" />
+                    <CommitmentsList class="min-h-[150px] flex-[3] lg:min-h-0" />
 
                     <!-- Discussion Topics Card (20%) -->
-                    <DiscussionTopics class="flex-[2] min-h-0" />
+                    <DiscussionTopics class="min-h-[120px] flex-[2] lg:min-h-0" />
                 </div>
             </div>
         </div>
