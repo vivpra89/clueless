@@ -1,7 +1,6 @@
 <template>
     <div
         class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-        style="min-height: 120px"
     >
         <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Discussion Topics</h3>
 
@@ -11,18 +10,18 @@
 
         <div
             v-else
-            class="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent flex flex-1 flex-wrap gap-2 overflow-y-auto"
+            class="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent flex flex-1 min-h-0 flex-wrap content-start gap-2 overflow-y-auto"
         >
             <div
                 v-for="topic in topics"
                 :key="topic.id"
                 :class="[
-                    'animate-fadeIn inline-flex items-center rounded-full px-2 py-1 text-xs font-medium',
+                    'animate-fadeIn inline-flex h-6 items-center rounded-full px-2 text-xs font-medium',
                     topicSentimentClass(topic.sentiment),
                 ]"
             >
                 <span>{{ topic.name }}</span>
-                <span class="text-gray-600 dark:text-gray-400">{{ topic.mentions }}x</span>
+                <span class="ml-1 text-gray-600 dark:text-gray-400">{{ topic.mentions }}x</span>
             </div>
         </div>
     </div>

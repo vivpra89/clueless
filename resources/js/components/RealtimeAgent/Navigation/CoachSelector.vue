@@ -1,7 +1,7 @@
 <template>
-    <div class="relative">
+    <div class="relative" @click.stop>
         <button
-            @click="toggleDropdown"
+            @click.stop="toggleDropdown"
             :disabled="isActive"
             class="flex items-center gap-1.5 text-xs text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
             :class="{ 'cursor-not-allowed opacity-50': isActive }"
@@ -18,6 +18,8 @@
         <!-- Coach Dropdown Menu -->
         <div
             v-if="showCoachDropdown"
+            @click.stop
+            data-dropdown
             class="absolute top-full right-0 left-0 z-50 mt-2 flex max-h-96 w-full flex-col rounded-lg bg-white shadow-xl md:right-0 md:left-auto md:w-80 dark:bg-gray-800"
         >
             <!-- Search Input -->
@@ -77,10 +79,13 @@ const searchQuery = computed({
 });
 
 const filteredTemplates = computed(() => {
-    if (!searchQuery.value) return templates.value;
+    // Ensure templates is an array
+    const templateArray = Array.isArray(templates.value) ? templates.value : [];
+    
+    if (!searchQuery.value) return templateArray;
     
     const query = searchQuery.value.toLowerCase();
-    return templates.value.filter(template => 
+    return templateArray.filter(template => 
         template.name.toLowerCase().includes(query)
     );
 });

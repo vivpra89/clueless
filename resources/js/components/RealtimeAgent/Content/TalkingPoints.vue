@@ -2,7 +2,6 @@
     <div
         class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
         v-if="selectedTemplate?.talking_points?.length > 0"
-        style="min-height: 150px"
     >
         <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Talking Points</h3>

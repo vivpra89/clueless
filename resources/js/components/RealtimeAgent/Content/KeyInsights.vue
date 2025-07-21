@@ -1,7 +1,6 @@
 <template>
     <div
-        class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-        style="min-height: 200px; max-height: 300px"
+        class="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
     >
         <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Key Insights</h3>
 
@@ -11,7 +10,7 @@
 
         <div
             v-else
-            class="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent flex-1 space-y-2 overflow-y-auto"
+            class="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent flex-1 min-h-0 space-y-2 overflow-y-auto"
         >
             <div v-for="insight in recentInsights" :key="insight.id" class="animate-fadeIn flex items-start gap-2">
                 <div class="flex items-start gap-2">

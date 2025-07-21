@@ -45,6 +45,16 @@ export const useSettingsStore = defineStore('settings', {
             }
         },
         
+        setOverlayMode(enabled: boolean) {
+            this.isOverlayMode = enabled;
+            // Add class to body element
+            if (this.isOverlayMode) {
+                document.body.classList.add('overlay-mode-active');
+            } else {
+                document.body.classList.remove('overlay-mode-active');
+            }
+        },
+        
         setProtectionSupported(supported: boolean) {
             this.isProtectionSupported = supported;
         },

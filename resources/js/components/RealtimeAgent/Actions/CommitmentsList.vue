@@ -1,7 +1,6 @@
 <template>
     <div
         class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-        style="min-height: 200px"
     >
         <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Commitments Made</h3>
 
@@ -9,7 +8,7 @@
             No commitments captured yet...
         </div>
 
-        <div v-else class="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent dark:scrollbar-thumb-gray-600 max-h-48 space-y-1.5 overflow-y-auto">
+        <div v-else class="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent dark:scrollbar-thumb-gray-600 flex-1 min-h-0 space-y-1.5 overflow-y-auto">
             <div v-for="commitment in commitments" :key="commitment.id" class="flex items-start gap-2 py-2 text-xs">
                 <div class="flex items-start gap-2">
                     <span

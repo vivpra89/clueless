@@ -1,7 +1,6 @@
 <template>
     <div
         class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-        style="min-height: 200px"
     >
         <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Post-Call Actions</h3>
 

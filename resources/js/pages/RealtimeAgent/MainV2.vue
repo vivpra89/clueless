@@ -1,6 +1,6 @@
 <template>
     <div
-        class="bg-dot-pattern scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent flex min-h-screen flex-col overflow-y-auto bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100"
+        class="bg-dot-pattern flex h-screen flex-col bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100"
         :class="{
             'screen-protection-active': isProtectionEnabled,
             'screen-protection-filter': isProtectionEnabled,
@@ -26,46 +26,45 @@
         <MobileMenu @dashboard-click="handleDashboardClick" />
 
         <!-- Main Container with scrollable layout -->
-        <div class="flex flex-1 flex-col p-4 pb-6 relative">
+        <div class="flex flex-1 flex-col p-4 pb-6 relative min-h-0">
             <!-- Screen Protection Overlay (content area only) -->
             <div v-if="isProtectionEnabled" class="screen-protection-content-overlay" aria-hidden="true"></div>
             
             <!-- Main Content Area with Responsive Columns -->
-            <div class="grid min-h-[calc(100vh-5rem)] grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div class="grid h-full grid-cols-1 grid-rows-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                 <!-- Column 1: Live Transcription -->
                 <LiveTranscription />
 
                 <!-- Column 2: Real-time Intelligence -->
-                <div class="col-span-1 flex flex-col gap-3">
+                <div class="col-span-1 flex h-full flex-col gap-3">
                     <!-- Customer Intelligence Card -->
-                    <CustomerIntelligence />
+                    <CustomerIntelligence class="flex-shrink-0" />
 
                     <!-- Key Insights Card -->
-                    <KeyInsights />
+                    <KeyInsights class="flex-1 min-h-0" />
 
-                    <!-- Discussion Topics Card -->
-                    <DiscussionTopics />
+                    <!-- Post-Call Actions Card (moved from column 3) -->
+                    <PostCallActions class="flex-1 min-h-0" />
 
                     <!-- Talking Points Card -->
-                    <TalkingPoints />
+                    <TalkingPoints class="flex-shrink-0" />
                 </div>
 
                 <!-- Column 3: Contextual & Actions -->
-                <div class="col-span-1 flex flex-col gap-3 md:col-span-2 xl:col-span-1">
-                    <!-- Contextual Information Card -->
-                    <div style="min-height: 150px">
-                        <ContextualInformation
-                            :prompt="selectedTemplate?.prompt || ''"
-                            :conversation-context="conversationContext"
-                            :last-customer-message="lastCustomerMessage"
-                        />
-                    </div>
+                <div class="col-span-1 flex h-full flex-col gap-3 md:col-span-2 xl:col-span-1">
+                    <!-- Contextual Information Card (50%) -->
+                    <ContextualInformation
+                        :prompt="selectedTemplate?.prompt || ''"
+                        :conversation-context="conversationContext"
+                        :last-customer-message="lastCustomerMessage"
+                        class="flex-[5] min-h-0"
+                    />
 
-                    <!-- Commitments Made Card -->
-                    <CommitmentsList />
+                    <!-- Commitments Made Card (30%) -->
+                    <CommitmentsList class="flex-[3] min-h-0" />
 
-                    <!-- Post-Call Actions Card -->
-                    <PostCallActions />
+                    <!-- Discussion Topics Card (20%) -->
+                    <DiscussionTopics class="flex-[2] min-h-0" />
                 </div>
             </div>
         </div>
@@ -128,7 +127,26 @@ onMounted(() => {
     setTimeout(() => {
         settingsStore.setOverlaySupported(overlayMode.isSupported.value);
         settingsStore.setProtectionSupported(screenProtection.isProtectionSupported.value);
+        
+        // Sync initial overlay mode state
+        if (overlayMode.isOverlayMode.value !== settingsStore.isOverlayMode) {
+            settingsStore.setOverlayMode(overlayMode.isOverlayMode.value);
+        }
     }, 200);
+    
+    // Listen for overlay mode changes to keep store in sync
+    const handleOverlayModeChange = (event: CustomEvent) => {
+        if (event.detail && typeof event.detail.enabled === 'boolean') {
+            settingsStore.setOverlayMode(event.detail.enabled);
+        }
+    };
+    
+    window.addEventListener('overlayModeChanged', handleOverlayModeChange as EventListener);
+    
+    // Cleanup on unmount
+    onUnmounted(() => {
+        window.removeEventListener('overlayModeChanged', handleOverlayModeChange as EventListener);
+    });
 });
 
 // Computed
@@ -136,7 +154,8 @@ const selectedTemplate = computed(() => realtimeStore.selectedTemplate);
 const conversationContext = computed(() => realtimeStore.conversationContext);
 const lastCustomerMessage = computed(() => realtimeStore.lastCustomerMessage);
 const isProtectionEnabled = computed(() => screenProtection.isProtectionEnabled.value);
-const isOverlayMode = computed(() => settingsStore.isOverlayMode);
+// Use the overlay mode state from the composable which is the source of truth
+const isOverlayMode = computed(() => overlayMode.isOverlayMode.value);
 
 // Store SDK objects outside of Vue's reactivity to avoid proxy issues
 let salespersonAgent: any = null;
@@ -285,15 +304,19 @@ const handleFunctionCall = (name: string, args: any) => {
 const initialize = async () => {
     try {
         // Fetch templates
-        const { data } = await axios.get('/templates');
-        realtimeStore.setTemplates(data);
+        const response = await axios.get('/templates');
+        // The response has templates wrapped in a templates property
+        const templates = response.data.templates || [];
+        realtimeStore.setTemplates(templates);
         
         // Select first template by default
-        if (data.length > 0 && !realtimeStore.selectedTemplate) {
-            realtimeStore.setSelectedTemplate(data[0]);
+        if (templates.length > 0 && !realtimeStore.selectedTemplate) {
+            realtimeStore.setSelectedTemplate(templates[0]);
         }
     } catch (error) {
         console.error('Failed to fetch templates:', error);
+        // Set empty array on error to prevent filter issues
+        realtimeStore.setTemplates([]);
     }
 };
 

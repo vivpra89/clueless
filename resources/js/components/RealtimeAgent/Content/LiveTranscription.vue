@@ -1,6 +1,6 @@
 <template>
-    <div class="col-span-1">
-        <div class="flex h-[600px] flex-col rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div class="col-span-1 h-full">
+        <div class="flex h-full flex-col rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
             <!-- Transcription Header -->
             <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                 <div class="flex items-center justify-between">
@@ -21,7 +21,7 @@
             <!-- Transcription Content - Reversed order, newest first -->
             <div
                 ref="transcriptContainer"
-                class="transcript-scrollbar flex flex-1 flex-col-reverse overflow-y-auto p-4 pb-8"
+                class="transcript-scrollbar flex flex-1 min-h-0 flex-col-reverse overflow-y-auto p-4 pb-8"
             >
                 <div v-if="transcriptGroups.length === 0" class="py-12 text-center">
                     <p class="text-sm text-gray-600 dark:text-gray-400">Waiting for conversation to begin...</p>
