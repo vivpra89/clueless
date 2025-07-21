@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex flex-col rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900"
+        class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
         v-if="selectedTemplate?.talking_points?.length > 0"
     >
         <div class="mb-3 flex items-center justify-between">

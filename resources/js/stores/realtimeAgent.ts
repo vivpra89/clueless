@@ -110,6 +110,31 @@ export const useRealtimeAgentStore = defineStore('realtimeAgent', {
             this.transcriptGroups.push(group);
         },
         
+        appendToLastTranscriptGroup(role: string, text: string, maxTimeGapMs: number = 5000): boolean {
+            // Check if we have any transcript groups
+            if (this.transcriptGroups.length === 0) {
+                return false;
+            }
+            
+            // Get the last transcript group
+            const lastGroup = this.transcriptGroups[this.transcriptGroups.length - 1];
+            
+            // Check if it's the same speaker and within time window
+            if (lastGroup.role === role) {
+                const now = Date.now();
+                const lastMessageTime = lastGroup.messages[lastGroup.messages.length - 1]?.timestamp || lastGroup.startTime;
+                
+                if (now - lastMessageTime <= maxTimeGapMs) {
+                    // Append to existing group
+                    lastGroup.messages.push({ text, timestamp: now });
+                    lastGroup.endTime = now;
+                    return true;
+                }
+            }
+            
+            return false;
+        },
+        
         updateTranscriptGroup(groupId: string, updates: Partial<TranscriptGroup>) {
             const group = this.transcriptGroups.find(g => g.id === groupId);
             if (group) {

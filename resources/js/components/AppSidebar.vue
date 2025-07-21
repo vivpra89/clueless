@@ -10,7 +10,7 @@ import AppLogo from './AppLogo.vue';
 const mainNavItems: NavItem[] = [
     {
         title: 'Realtime Agent',
-        href: '/realtime-agent',
+        href: '/realtime-agent-v2',
         icon: Phone,
     },
     {

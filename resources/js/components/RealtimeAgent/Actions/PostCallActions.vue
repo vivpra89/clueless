@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex flex-col rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900"
+        class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
     >
         <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Post-Call Actions</h3>
 

@@ -1,6 +1,6 @@
 <template>
     <div class="col-span-1 h-full">
-        <div class="flex h-full flex-col rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex h-full flex-col rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
             <!-- Transcription Header -->
             <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                 <div class="flex items-center justify-between">
@@ -39,10 +39,10 @@
                 >
                     <div
                         :class="[
-                            'animate-fadeIn inline-block max-w-[70%] rounded-lg border p-3 shadow-sm',
+                            'animate-fadeIn inline-block max-w-[70%] rounded-lg border p-3',
                             group.role === 'salesperson' ? 'border-blue-50 bg-blue-50 text-left dark:border-blue-900/20 dark:bg-blue-900/20' : '',
                             group.role === 'customer' ? 'border-gray-200 bg-gray-100 text-left dark:border-gray-700 dark:bg-gray-700' : '',
-                            group.role === 'system' ? 'border-yellow-100 bg-yellow-50 text-center text-sm dark:border-yellow-900/20 dark:bg-yellow-900/20' : ''
+                            group.role === 'system' ? 'border-gray-200 bg-gray-50 text-center text-sm dark:border-gray-700 dark:bg-gray-800' : ''
                         ]"
                     >
                         <div class="min-w-0">

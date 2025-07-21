@@ -1,6 +1,6 @@
 <template>
     <div
-        class="rounded-lg border border-gray-200 bg-gray-50 p-4 transition-all duration-300 dark:border-gray-700 dark:bg-gray-900"
+        class="rounded-lg border border-gray-200 bg-white p-4 transition-all duration-300 dark:border-gray-700 dark:bg-gray-900"
         :class="{ 'animate-fadeIn': intelligenceUpdating }"
     >
         <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -12,13 +12,13 @@
 
         <!-- Intent & Stage -->
         <div class="mb-3 grid grid-cols-2 gap-3">
-            <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
+            <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
                 <p class="text-xs text-gray-600 dark:text-gray-400">Intent</p>
                 <p class="text-sm font-medium text-gray-900 capitalize dark:text-gray-100">
                     {{ customerIntelligence.intent }}
                 </p>
             </div>
-            <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
+            <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
                 <p class="text-xs text-gray-600 dark:text-gray-400">Stage</p>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {{ customerIntelligence.buyingStage }}

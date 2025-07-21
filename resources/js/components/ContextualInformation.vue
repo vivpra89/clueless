@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900"
+        class="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
     >
         <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Contextual Information</h3>
@@ -24,7 +24,7 @@
                     leave-from-class="transform opacity-100 scale-100"
                     leave-to-class="transform opacity-0 scale-95"
                 >
-                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900" :key="relevantSection.title">
+                    <div class="rounded-lg border border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-800" :key="relevantSection.title">
                         <h4 class="mb-1 text-xs font-semibold text-gray-700 uppercase dark:text-gray-300">
                             {{ relevantSection.title }}
                         </h4>

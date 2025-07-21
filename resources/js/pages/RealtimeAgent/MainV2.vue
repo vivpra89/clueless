@@ -510,7 +510,7 @@ const initializeAgents = async (apiKey: string) => {
                 },
                 voice: 'alloy',
                 temperature: 0.8,
-                max_output_tokens: 4096,
+                max_response_output_tokens: 4096,
             },
         });
         console.log('✅ Salesperson session configured for audio transcription');
@@ -535,11 +535,9 @@ Call multiple functions per statement if relevant. Don't wait for complete thoug
         // Convert tools to the format expected by OpenAI
         const toolDefinitions = coachingTools.map(tool => ({
             type: 'function',
-            function: {
-                name: tool.name,
-                description: tool.description,
-                parameters: tool.parameters,
-            }
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.parameters,
         }));
         
         coachSession.transport.sendEvent({
@@ -560,7 +558,7 @@ Call multiple functions per statement if relevant. Don't wait for complete thoug
                 },
                 voice: 'alloy',
                 temperature: 0.8,
-                max_output_tokens: 4096,
+                max_response_output_tokens: 4096,
                 tools: toolDefinitions,
                 tool_choice: 'auto',
             },
@@ -636,13 +634,19 @@ const setupSessionHandlers = () => {
         salespersonSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
             console.log('Salesperson transcription completed:', event);
             if (event.transcript) {
-                const groupId = `salesperson-${Date.now()}`;
-                realtimeStore.addTranscriptGroup({
-                    id: groupId,
-                    role: 'salesperson',
-                    messages: [{ text: event.transcript, timestamp: Date.now() }],
-                    startTime: Date.now(),
-                });
+                // Try to append to last group if same speaker
+                const appended = realtimeStore.appendToLastTranscriptGroup('salesperson', event.transcript);
+                
+                if (!appended) {
+                    // Create new group if not appended
+                    const groupId = `salesperson-${Date.now()}`;
+                    realtimeStore.addTranscriptGroup({
+                        id: groupId,
+                        role: 'salesperson',
+                        messages: [{ text: event.transcript, timestamp: Date.now() }],
+                        startTime: Date.now(),
+                    });
+                }
                 
                 // Forward to coach for analysis
                 if (coachSession && coachSession.transport) {
@@ -666,13 +670,19 @@ const setupSessionHandlers = () => {
         coachSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
             console.log('Customer transcription completed:', event);
             if (event.transcript) {
-                const groupId = `customer-${Date.now()}`;
-                realtimeStore.addTranscriptGroup({
-                    id: groupId,
-                    role: 'customer',
-                    messages: [{ text: event.transcript, timestamp: Date.now() }],
-                    startTime: Date.now(),
-                });
+                // Try to append to last group if same speaker
+                const appended = realtimeStore.appendToLastTranscriptGroup('customer', event.transcript);
+                
+                if (!appended) {
+                    // Create new group if not appended
+                    const groupId = `customer-${Date.now()}`;
+                    realtimeStore.addTranscriptGroup({
+                        id: groupId,
+                        role: 'customer',
+                        messages: [{ text: event.transcript, timestamp: Date.now() }],
+                        startTime: Date.now(),
+                    });
+                }
                 
                 // Update last customer message and context
                 realtimeStore.setLastCustomerMessage(event.transcript);
