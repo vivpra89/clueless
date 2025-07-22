@@ -179,9 +179,6 @@ const handleDashboardClick = () => {
     settingsStore.closeAllDropdowns();
 };
 
-const closeMobileMenu = () => {
-    settingsStore.closeAllDropdowns();
-};
 
 const getIconEmoji = (icon?: string) => {
     if (!icon) return '📋';

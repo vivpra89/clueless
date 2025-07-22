@@ -387,7 +387,7 @@ const endCall = async () => {
         if ((window as any).audioLoopback) {
             try {
                 await (window as any).audioLoopback.disableLoopback();
-            } catch (e) {
+            } catch {
                 // Ignore errors on cleanup
             }
         }
@@ -570,22 +570,22 @@ const setupSessionHandlers = () => {
     
     // Listen for all events on transport layer for debugging
     if (salespersonSession.transport) {
-        salespersonSession.transport.on('*', (event: any) => {
+        salespersonSession.transport.on('*', () => {
         });
     }
     
     if (coachSession.transport) {
-        coachSession.transport.on('*', (event: any) => {
+        coachSession.transport.on('*', () => {
         });
     }
     
     // Salesperson session handlers
-    salespersonSession.on('conversation.updated', (event: any) => {
+    salespersonSession.on('conversation.updated', () => {
         // Note: Transcript handling moved to conversation.item.input_audio_transcription.completed
     });
     
     // Coach session handlers
-    coachSession.on('conversation.updated', (event: any) => {
+    coachSession.on('conversation.updated', () => {
         // Note: Transcript handling moved to conversation.item.input_audio_transcription.completed
     });
     
@@ -863,7 +863,7 @@ const startAudioCapture = async () => {
                 // Disable loopback if getDisplayMedia failed
                 try {
                     await (window as any).audioLoopback.disableLoopback();
-                } catch (e) {
+                } catch {
                     // Ignore cleanup errors
                 }
                 throw error;
