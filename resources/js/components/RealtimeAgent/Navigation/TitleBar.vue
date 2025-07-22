@@ -64,6 +64,28 @@
                 Call History
             </button>
             
+            <!-- Navigation Links -->
+            <a
+                href="/audio-test"
+                class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            >
+                Audio Test
+            </a>
+            
+            <a
+                href="/realtime-agent"
+                class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            >
+                Agent V1
+            </a>
+            
+            <a
+                href="/realtime-agent-v2"
+                class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            >
+                Agent V2
+            </a>
+            
             <button
                 @click="toggleSession"
                 class="rounded-md px-4 py-1.5 text-xs font-medium transition-colors"

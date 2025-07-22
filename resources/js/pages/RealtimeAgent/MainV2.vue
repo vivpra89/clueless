@@ -158,9 +158,9 @@ let salespersonSession: any = null;
 let coachSession: any = null;
 
 // Audio capture
-let audioCapture: any = null;
 let audioContext: AudioContext | null = null;
 let micStream: MediaStream | null = null;
+let systemStream: MediaStream | null = null;
 let sessionsReady = false;
 
 // Tool definitions using SDK
@@ -386,16 +386,26 @@ const startCall = async () => {
 
 const endCall = async () => {
     try {
-        // Stop audio capture
-        if (audioCapture) {
-            await audioCapture.stop();
-            audioCapture = null;
-        }
-        
         // Stop microphone stream
         if (micStream) {
             micStream.getTracks().forEach(track => track.stop());
             micStream = null;
+        }
+        
+        // Stop system audio stream
+        if (systemStream) {
+            systemStream.getTracks().forEach(track => track.stop());
+            systemStream = null;
+        }
+        
+        // Disable audio loopback if enabled
+        if ((window as any).audioLoopback) {
+            try {
+                await (window as any).audioLoopback.disableLoopback();
+                console.log('Audio loopback disabled');
+            } catch (e) {
+                console.log('Failed to disable audio loopback:', e);
+            }
         }
         
         // Close audio context
@@ -722,9 +732,39 @@ const setupSessionHandlers = () => {
     });
 };
 
+const checkMicrophonePermission = async () => {
+    try {
+        // Check if we're in Electron environment on macOS
+        if (window.location.protocol === 'nativephp:' && navigator.platform.includes('Mac')) {
+            // Check current microphone permission status
+            const statusResponse = await axios.get('/api/system/media-access-status/microphone');
+            console.log('🎤 Microphone permission status:', statusResponse.data.status);
+            
+            if (statusResponse.data.status !== 'granted') {
+                // Request microphone permission
+                console.log('🎤 Requesting microphone permission...');
+                const permissionResponse = await axios.post('/api/system/ask-for-media-access', {
+                    mediaType: 'microphone'
+                });
+                
+                if (!permissionResponse.data.granted) {
+                    throw new Error('Microphone permission denied');
+                }
+                console.log('✅ Microphone permission granted');
+            }
+        }
+    } catch (error) {
+        console.error('Error checking microphone permission:', error);
+        // Continue anyway - the browser will handle permissions
+    }
+};
+
 const startAudioCapture = async () => {
     try {
         console.log('🎤 Setting up dual audio capture...');
+        
+        // Check microphone permission first on macOS
+        await checkMicrophonePermission();
         
         // Setup microphone capture for salesperson's voice
         micStream = await navigator.mediaDevices.getUserMedia({
@@ -793,30 +833,55 @@ const startAudioCapture = async () => {
         micSource.connect(micProcessor);
         micProcessor.connect(audioContext.destination);
         
-        // Try to setup system audio capture using Swift helper
+        // Try to setup system audio capture using electron-audio-loopback
         try {
-            // Dynamic import to avoid SSR issues
-            const { SystemAudioCapture, isSystemAudioAvailable } = await import('@/services/audioCapture');
+            console.log('🔊 Setting up system audio capture with electron-audio-loopback...');
             
-            // Check if system audio capture is available
-            const isAvailable = await isSystemAudioAvailable();
-            console.log('🔍 System audio available check result:', isAvailable);
+            // Check if audio loopback is available
+            if (!(window as any).audioLoopback) {
+                throw new Error('Audio loopback not available');
+            }
             
-            if (isAvailable) {
-                console.log('🔊 System audio capture available, starting...');
+            // Enable audio loopback
+            try {
+                await (window as any).audioLoopback.enableLoopback();
+                console.log('✅ Audio loopback enabled');
+            } catch (e) {
+                console.error('Failed to enable audio loopback:', e);
+                throw e;
+            }
+            
+            // Get system audio stream using getDisplayMedia
+            try {
+                const displayStream = await navigator.mediaDevices.getDisplayMedia({
+                    audio: true,
+                    video: true
+                });
                 
-                audioCapture = new SystemAudioCapture();
+                // Remove video tracks, keep only audio
+                const videoTracks = displayStream.getTracks().filter(t => t.kind === 'video');
+                videoTracks.forEach(t => {
+                    t.stop();
+                    displayStream.removeTrack(t);
+                });
                 
-                // Check permission first
-                const hasPermission = await audioCapture.checkPermission();
-                console.log('🔒 Screen recording permission:', hasPermission ? 'granted' : 'denied');
+                systemStream = displayStream;
+                console.log('✅ System audio stream obtained');
                 
-                // Handle audio data from system
-                audioCapture.on('audio', (pcm16: Int16Array) => {
+                // Create audio processor for system audio
+                const systemSource = audioContext.createMediaStreamSource(systemStream);
+                const systemProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                systemProcessor.onaudioprocess = (event) => {
                     if (realtimeStore.isActive && sessionsReady) {
-                        // Update system audio level
-                        const sum = Array.from(pcm16).reduce((acc, val) => acc + Math.abs(val), 0);
-                        realtimeStore.setSystemAudioLevel(Math.min(100, (sum / pcm16.length) * 0.5));
+                        const inputData = event.inputBuffer.getChannelData(0);
+                        
+                        // Update system audio level for visualization
+                        const sum = inputData.reduce((acc, val) => acc + Math.abs(val), 0);
+                        realtimeStore.setSystemAudioLevel(Math.min(100, (sum / inputData.length) * 500));
+                        
+                        // Convert to PCM16 and send audio
+                        const pcm16 = convertFloat32ToPCM16(inputData);
                         
                         // Send to coach session
                         if (coachSession && coachSession.transport) {
@@ -842,65 +907,21 @@ const startAudioCapture = async () => {
                             }
                         }
                     }
-                });
+                };
                 
-                // Handle status updates
-                audioCapture.on('status', (state: string) => {
-                    console.log('🔊 System audio status:', state);
-                    
-                    // Map status states to our UI states
-                    switch (state) {
-                        case 'capturing':
-                            realtimeStore.setSystemAudioActive(true);
-                            break;
-                        case 'stopped':
-                            realtimeStore.setSystemAudioActive(false);
-                            break;
-                        case 'retrying':
-                        case 'restarting':
-                            realtimeStore.addTranscriptGroup({
-                                id: `system-${Date.now()}`,
-                                role: 'system',
-                                messages: [{ text: `🔄 System audio is ${state}...`, timestamp: Date.now() }],
-                                startTime: Date.now(),
-                                systemCategory: 'warning',
-                            });
-                            break;
-                    }
-                });
+                systemSource.connect(systemProcessor);
+                systemProcessor.connect(audioContext.destination);
                 
-                // Handle errors
-                audioCapture.on('error', (error: Error) => {
-                    console.error('❌ System audio error:', error);
-                    realtimeStore.setSystemAudioActive(false);
-                    
-                    // Check if it's a permission error
-                    if (error.message.includes('Screen recording permission')) {
-                        realtimeStore.addTranscriptGroup({
-                            id: `system-${Date.now()}`,
-                            role: 'system',
-                            messages: [
-                                { text: '🔒 Screen Recording Permission Required', timestamp: Date.now() },
-                                { text: '1. System Preferences should open automatically', timestamp: Date.now() },
-                                { text: '2. Enable Screen Recording for this app', timestamp: Date.now() },
-                                { text: '3. Restart the session after granting permission', timestamp: Date.now() },
-                            ],
-                            startTime: Date.now(),
-                            systemCategory: 'error',
-                        });
-                    } else {
-                        realtimeStore.addTranscriptGroup({
-                            id: `system-${Date.now()}`,
-                            role: 'system',
-                            messages: [{ text: `⚠️ System audio error: ${error.message}`, timestamp: Date.now() }],
-                            startTime: Date.now(),
-                            systemCategory: 'error',
-                        });
-                    }
-                });
+                // Set system audio as active
+                realtimeStore.setSystemAudioActive(true);
                 
-                // Start capture
-                await audioCapture.start();
+                // Handle stream end
+                systemStream.getTracks().forEach(track => {
+                    track.addEventListener('ended', () => {
+                        console.log('System audio track ended');
+                        realtimeStore.setSystemAudioActive(false);
+                    });
+                });
                 
                 realtimeStore.addTranscriptGroup({
                     id: `system-${Date.now()}`,
@@ -909,25 +930,48 @@ const startAudioCapture = async () => {
                     startTime: Date.now(),
                     systemCategory: 'success',
                 });
-            } else {
-                throw new Error('System audio capture not available');
+                
+            } catch (error) {
+                // Disable loopback if getDisplayMedia failed
+                try {
+                    await (window as any).audioLoopback.disableLoopback();
+                } catch (e) {
+                    console.error('Failed to disable loopback after error:', e);
+                }
+                throw error;
             }
+            
         } catch (error) {
-            console.warn('⚠️ System audio capture not available:', error);
+            console.warn('⚠️ System audio capture failed:', error);
             realtimeStore.setSystemAudioActive(false);
             
-            // Fallback to mixed audio mode
-            realtimeStore.addTranscriptGroup({
-                id: `system-${Date.now()}`,
-                role: 'system',
-                messages: [
-                    { text: '⚠️ System audio capture unavailable. Using mixed audio mode.', timestamp: Date.now() },
-                    { text: '• Use headphones to reduce echo', timestamp: Date.now() },
-                    { text: '• AI will identify speakers based on conversation context', timestamp: Date.now() },
-                ],
-                startTime: Date.now(),
-                systemCategory: 'warning',
-            });
+            // Check if user cancelled screen share
+            if (error instanceof Error && error.name === 'NotAllowedError') {
+                realtimeStore.addTranscriptGroup({
+                    id: `system-${Date.now()}`,
+                    role: 'system',
+                    messages: [
+                        { text: '⚠️ Screen share cancelled. System audio not captured.', timestamp: Date.now() },
+                        { text: '• Using microphone only mode', timestamp: Date.now() },
+                        { text: '• To enable system audio, restart the call and share your screen', timestamp: Date.now() },
+                    ],
+                    startTime: Date.now(),
+                    systemCategory: 'warning',
+                });
+            } else {
+                // Other errors - fallback to mixed audio mode
+                realtimeStore.addTranscriptGroup({
+                    id: `system-${Date.now()}`,
+                    role: 'system',
+                    messages: [
+                        { text: '⚠️ System audio capture unavailable. Using mixed audio mode.', timestamp: Date.now() },
+                        { text: '• Use headphones to reduce echo', timestamp: Date.now() },
+                        { text: '• AI will identify speakers based on conversation context', timestamp: Date.now() },
+                    ],
+                    startTime: Date.now(),
+                    systemCategory: 'warning',
+                });
+            }
         }
         
         console.log('✅ Audio pipeline setup complete');

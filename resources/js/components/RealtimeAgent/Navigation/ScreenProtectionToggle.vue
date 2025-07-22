@@ -9,13 +9,6 @@
                     : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
                 : 'text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300',
         ]"
-        :title="
-            !isProtectionSupported
-                ? 'Screen protection not available'
-                : isProtectionEnabled
-                  ? 'Screen protection is ON'
-                  : 'Screen protection is OFF'
-        "
     >
         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
