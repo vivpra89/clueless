@@ -257,10 +257,6 @@ const coachingTools = [
 
 // Function call handler (same as original)
 const handleFunctionCall = (name: string, args: any) => {
-    console.log('🔧 Handling function call:', name, args);
-    console.log('Current topics:', realtimeStore.topics.length);
-    console.log('Current insights:', realtimeStore.insights.length);
-    
     switch (name) {
         case 'track_discussion_topic':
             realtimeStore.trackDiscussionTopic(args.name, args.sentiment, args.context);
@@ -288,7 +284,6 @@ const handleFunctionCall = (name: string, args: any) => {
             break;
             
         case 'detect_information_need':
-            console.log('📋 Information need detected:', args);
             // Could update conversation context or trigger specific responses
             realtimeStore.setConversationContext(`Customer asking about ${args.topic}: ${args.context}`);
             break;
@@ -359,16 +354,6 @@ const startCall = async () => {
         // Auto-enable screen protection during calls
         screenProtection.enableForCall();
         
-        // Test audio connection
-        setTimeout(() => {
-            console.log('🔍 Audio capture status check:', {
-                isActive: realtimeStore.isActive,
-                microphoneStatus: realtimeStore.microphoneStatus,
-                systemAudioActive: realtimeStore.systemAudioActive,
-                audioLevel: realtimeStore.audioLevel,
-                systemAudioLevel: realtimeStore.systemAudioLevel,
-            });
-        }, 3000);
         
         // Add initial system message
         realtimeStore.addTranscriptGroup({
@@ -402,9 +387,8 @@ const endCall = async () => {
         if ((window as any).audioLoopback) {
             try {
                 await (window as any).audioLoopback.disableLoopback();
-                console.log('Audio loopback disabled');
             } catch (e) {
-                console.log('Failed to disable audio loopback:', e);
+                // Ignore errors on cleanup
             }
         }
         
@@ -498,8 +482,6 @@ const initializeAgents = async (apiKey: string) => {
     await coachSession.connect({});
     
     // Configure sessions after connection
-    console.log('🔧 Configuring sessions for audio...');
-    
     // Configure salesperson session for transcription
     if (salespersonSession?.transport) {
         salespersonSession.transport.sendEvent({
@@ -523,7 +505,6 @@ const initializeAgents = async (apiKey: string) => {
                 max_response_output_tokens: 4096,
             },
         });
-        console.log('✅ Salesperson session configured for audio transcription');
     }
     
     // Configure coach session with tools
@@ -573,12 +554,10 @@ Call multiple functions per statement if relevant. Don't wait for complete thoug
                 tool_choice: 'auto',
             },
         });
-        console.log('✅ Coach session configured with tools:', toolDefinitions.length);
     }
     
     // Mark sessions as ready
     sessionsReady = true;
-    console.log('✅ All sessions configured and ready for audio');
     
     // Store in OpenAI store
     openaiStore.setSalespersonAgent(salespersonAgent, salespersonSession);
@@ -588,43 +567,30 @@ Call multiple functions per statement if relevant. Don't wait for complete thoug
 const setupSessionHandlers = () => {
     if (!salespersonSession || !coachSession) return;
     
-    // Debug logging to understand session structure
-    console.log('Setting up session handlers...');
-    console.log('Salesperson session:', salespersonSession);
-    console.log('Coach session:', coachSession);
     
     // Listen for all events on transport layer for debugging
     if (salespersonSession.transport) {
         salespersonSession.transport.on('*', (event: any) => {
-            if (event.type !== 'input_audio_buffer.append') { // Don't log audio append events
-                console.log('Salesperson transport event:', event.type, event);
-            }
         });
     }
     
     if (coachSession.transport) {
         coachSession.transport.on('*', (event: any) => {
-            if (event.type !== 'input_audio_buffer.append') { // Don't log audio append events
-                console.log('Coach transport event:', event.type, event);
-            }
         });
     }
     
     // Salesperson session handlers
     salespersonSession.on('conversation.updated', (event: any) => {
-        console.log('Salesperson conversation updated:', event);
         // Note: Transcript handling moved to conversation.item.input_audio_transcription.completed
     });
     
     // Coach session handlers
     coachSession.on('conversation.updated', (event: any) => {
-        console.log('Coach conversation updated:', event);
         // Note: Transcript handling moved to conversation.item.input_audio_transcription.completed
     });
     
     // Function call handlers for coach analytics
     coachSession.on('response.function_call_arguments.done', (event: any) => {
-        console.log('✅ Coach function call complete:', event);
         if (event.name && event.arguments) {
             try {
                 const args = JSON.parse(event.arguments);
@@ -636,13 +602,11 @@ const setupSessionHandlers = () => {
     });
     
     coachSession.on('response.done', () => {
-        console.log('✅ Coach response complete');
     });
     
     // Handle transcription events - these are the primary events for capturing audio transcripts
     if (salespersonSession.transport) {
         salespersonSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
-            console.log('Salesperson transcription completed:', event);
             if (event.transcript) {
                 // Try to append to last group if same speaker
                 const appended = realtimeStore.appendToLastTranscriptGroup('salesperson', event.transcript);
@@ -678,7 +642,6 @@ const setupSessionHandlers = () => {
     
     if (coachSession.transport) {
         coachSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
-            console.log('Customer transcription completed:', event);
             if (event.transcript) {
                 // Try to append to last group if same speaker
                 const appended = realtimeStore.appendToLastTranscriptGroup('customer', event.transcript);
@@ -738,11 +701,9 @@ const checkMicrophonePermission = async () => {
         if (window.location.protocol === 'nativephp:' && navigator.platform.includes('Mac')) {
             // Check current microphone permission status
             const statusResponse = await axios.get('/api/system/media-access-status/microphone');
-            console.log('🎤 Microphone permission status:', statusResponse.data.status);
             
             if (statusResponse.data.status !== 'granted') {
                 // Request microphone permission
-                console.log('🎤 Requesting microphone permission...');
                 const permissionResponse = await axios.post('/api/system/ask-for-media-access', {
                     mediaType: 'microphone'
                 });
@@ -750,7 +711,6 @@ const checkMicrophonePermission = async () => {
                 if (!permissionResponse.data.granted) {
                     throw new Error('Microphone permission denied');
                 }
-                console.log('✅ Microphone permission granted');
             }
         }
     } catch (error) {
@@ -761,7 +721,6 @@ const checkMicrophonePermission = async () => {
 
 const startAudioCapture = async () => {
     try {
-        console.log('🎤 Setting up dual audio capture...');
         
         // Check microphone permission first on macOS
         await checkMicrophonePermission();
@@ -777,7 +736,6 @@ const startAudioCapture = async () => {
             },
         });
         realtimeStore.setMicrophoneStatus('active');
-        console.log('✅ Microphone access granted (Salesperson audio)');
         
         // Create audio context with 24kHz sample rate (required by OpenAI)
         audioContext = new AudioContext({ sampleRate: 24000 });
@@ -785,7 +743,6 @@ const startAudioCapture = async () => {
         // Resume audio context if it's suspended
         if (audioContext.state === 'suspended') {
             await audioContext.resume();
-            console.log('✅ Audio context resumed');
         }
         
         // Setup microphone processor
@@ -813,21 +770,10 @@ const startAudioCapture = async () => {
                         });
                         
                         // Log occasionally for debugging
-                        if (Math.random() < 0.02) {
-                            console.log('🎤 Sent audio to salesperson session', {
-                                audioLength: base64Audio.length,
-                                samples: pcm16.length,
-                                sessionsReady,
-                                transportConnected: !!salespersonSession.transport,
-                            });
-                        }
                     } catch (error) {
                         console.error('Failed to send audio to salesperson:', error);
                     }
                 }
-            } else if (!sessionsReady && Math.random() < 0.1) {
-                console.log('⏳ Audio ready but sessions not configured yet');
-            }
         };
         
         micSource.connect(micProcessor);
@@ -835,7 +781,6 @@ const startAudioCapture = async () => {
         
         // Try to setup system audio capture using electron-audio-loopback
         try {
-            console.log('🔊 Setting up system audio capture with electron-audio-loopback...');
             
             // Check if audio loopback is available
             if (!(window as any).audioLoopback) {
@@ -845,7 +790,6 @@ const startAudioCapture = async () => {
             // Enable audio loopback
             try {
                 await (window as any).audioLoopback.enableLoopback();
-                console.log('✅ Audio loopback enabled');
             } catch (e) {
                 console.error('Failed to enable audio loopback:', e);
                 throw e;
@@ -866,7 +810,6 @@ const startAudioCapture = async () => {
                 });
                 
                 systemStream = displayStream;
-                console.log('✅ System audio stream obtained');
                 
                 // Create audio processor for system audio
                 const systemSource = audioContext.createMediaStreamSource(systemStream);
@@ -892,16 +835,6 @@ const startAudioCapture = async () => {
                                     audio: base64Audio,
                                 });
                                 
-                                // Log occasionally for debugging
-                                if (Math.random() < 0.05) {
-                                    console.log('📞 Sent system audio to coach session', {
-                                        audioLength: base64Audio.length,
-                                        samples: pcm16.length,
-                                        level: realtimeStore.systemAudioLevel,
-                                        sessionsReady,
-                                        transportConnected: !!coachSession.transport,
-                                    });
-                                }
                             } catch (error) {
                                 console.error('Failed to send audio to coach:', error);
                             }
@@ -918,7 +851,6 @@ const startAudioCapture = async () => {
                 // Handle stream end
                 systemStream.getTracks().forEach(track => {
                     track.addEventListener('ended', () => {
-                        console.log('System audio track ended');
                         realtimeStore.setSystemAudioActive(false);
                     });
                 });
@@ -936,13 +868,12 @@ const startAudioCapture = async () => {
                 try {
                     await (window as any).audioLoopback.disableLoopback();
                 } catch (e) {
-                    console.error('Failed to disable loopback after error:', e);
+                    // Ignore cleanup errors
                 }
                 throw error;
             }
             
         } catch (error) {
-            console.warn('⚠️ System audio capture failed:', error);
             realtimeStore.setSystemAudioActive(false);
             
             // Check if user cancelled screen share
@@ -973,8 +904,6 @@ const startAudioCapture = async () => {
                 });
             }
         }
-        
-        console.log('✅ Audio pipeline setup complete');
         
     } catch (error) {
         console.error('❌ Failed to setup audio:', error);
@@ -1029,16 +958,12 @@ watch(selectedTemplate, (newTemplate) => {
 
 // Developer console methods
 const enableMockMode = () => {
-    console.log('🎭 Enabling mock mode with pre-loaded data...');
     realtimeStore.enableMockMode();
-    console.log('✅ Mock mode enabled with conversation history, insights, and action items');
     return 'Mock mode enabled';
 };
 
 const disableMockMode = () => {
-    console.log('🎭 Disabling mock mode...');
     realtimeStore.disableMockMode();
-    console.log('✅ Mock mode disabled');
     return 'Mock mode disabled';
 };
 
@@ -1058,11 +983,6 @@ onMounted(() => {
     document.addEventListener('click', () => {
         settingsStore.closeAllDropdowns();
     });
-    
-    // Log developer console commands
-    console.log('🛠️ Developer Commands Available:');
-    console.log('  window.clueless.enableMockMode() - Load mock conversation data');
-    console.log('  window.clueless.disableMockMode() - Disable mock mode');
 });
 
 onUnmounted(async () => {
