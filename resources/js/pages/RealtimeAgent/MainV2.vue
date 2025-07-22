@@ -774,6 +774,7 @@ const startAudioCapture = async () => {
                         console.error('Failed to send audio to salesperson:', error);
                     }
                 }
+            }
         };
         
         micSource.connect(micProcessor);
@@ -788,12 +789,7 @@ const startAudioCapture = async () => {
             }
             
             // Enable audio loopback
-            try {
-                await (window as any).audioLoopback.enableLoopback();
-            } catch (e) {
-                console.error('Failed to enable audio loopback:', e);
-                throw e;
-            }
+            await (window as any).audioLoopback.enableLoopback();
             
             // Get system audio stream using getDisplayMedia
             try {
