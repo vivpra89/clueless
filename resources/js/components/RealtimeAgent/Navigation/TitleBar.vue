@@ -50,9 +50,6 @@
 
             <!-- Overlay Mode Toggle -->
             <OverlayModeToggle v-if="isOverlaySupported" />
-            
-            <!-- Mock Mode Toggle -->
-            <MockModeToggle />
 
             <!-- Actions -->
             <button
@@ -63,28 +60,6 @@
             >
                 Call History
             </button>
-            
-            <!-- Navigation Links -->
-            <a
-                href="/audio-test"
-                class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            >
-                Audio Test
-            </a>
-            
-            <a
-                href="/realtime-agent"
-                class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            >
-                Agent V1
-            </a>
-            
-            <a
-                href="/realtime-agent-v2"
-                class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            >
-                Agent V2
-            </a>
             
             <button
                 @click="toggleSession"
@@ -123,7 +98,6 @@ import CoachSelector from './CoachSelector.vue';
 import ConnectionStatus from './ConnectionStatus.vue';
 import ScreenProtectionToggle from './ScreenProtectionToggle.vue';
 import OverlayModeToggle from './OverlayModeToggle.vue';
-import MockModeToggle from './MockModeToggle.vue';
 
 // Props
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

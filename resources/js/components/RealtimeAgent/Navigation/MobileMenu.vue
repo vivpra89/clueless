@@ -100,41 +100,15 @@
                 <span class="font-medium">{{ isOverlayMode ? 'ON' : 'OFF' }}</span>
             </button>
 
-            <!-- Navigation Links -->
-            <div class="border-t border-gray-100 pt-3 space-y-2 dark:border-gray-800">
-                <button
-                    @click="handleDashboardClick"
-                    :disabled="isActive"
-                    class="w-full text-left text-xs text-gray-600 dark:text-gray-400"
-                    :class="{ 'cursor-not-allowed opacity-50': isActive }"
-                >
-                    View Call History →
-                </button>
-                
-                <a
-                    href="/audio-test"
-                    class="block w-full text-left text-xs text-gray-600 dark:text-gray-400"
-                    @click="closeMobileMenu"
-                >
-                    Audio Test →
-                </a>
-                
-                <a
-                    href="/realtime-agent"
-                    class="block w-full text-left text-xs text-gray-600 dark:text-gray-400"
-                    @click="closeMobileMenu"
-                >
-                    Agent V1 →
-                </a>
-                
-                <a
-                    href="/realtime-agent-v2"
-                    class="block w-full text-left text-xs text-gray-600 dark:text-gray-400"
-                    @click="closeMobileMenu"
-                >
-                    Agent V2 →
-                </a>
-            </div>
+            <!-- Call History Link -->
+            <button
+                @click="handleDashboardClick"
+                :disabled="isActive"
+                class="w-full border-t border-gray-100 pt-3 text-left text-xs text-gray-600 dark:border-gray-800 dark:text-gray-400"
+                :class="{ 'cursor-not-allowed opacity-50': isActive }"
+            >
+                View Call History →
+            </button>
         </div>
     </div>
 </template>

@@ -1027,6 +1027,29 @@ watch(selectedTemplate, (newTemplate) => {
     }
 });
 
+// Developer console methods
+const enableMockMode = () => {
+    console.log('🎭 Enabling mock mode with pre-loaded data...');
+    realtimeStore.enableMockMode();
+    console.log('✅ Mock mode enabled with conversation history, insights, and action items');
+    return 'Mock mode enabled';
+};
+
+const disableMockMode = () => {
+    console.log('🎭 Disabling mock mode...');
+    realtimeStore.disableMockMode();
+    console.log('✅ Mock mode disabled');
+    return 'Mock mode disabled';
+};
+
+// Expose to window for console access
+if (typeof window !== 'undefined') {
+    (window as any).clueless = {
+        enableMockMode,
+        disableMockMode,
+    };
+}
+
 // Lifecycle
 onMounted(() => {
     initialize();
@@ -1035,6 +1058,11 @@ onMounted(() => {
     document.addEventListener('click', () => {
         settingsStore.closeAllDropdowns();
     });
+    
+    // Log developer console commands
+    console.log('🛠️ Developer Commands Available:');
+    console.log('  window.clueless.enableMockMode() - Load mock conversation data');
+    console.log('  window.clueless.disableMockMode() - Disable mock mode');
 });
 
 onUnmounted(async () => {
@@ -1049,21 +1077,6 @@ onUnmounted(async () => {
 </script>
 
 <style>
-/* V2 Badge - for testing */
-.title-bar::after {
-    content: 'V2';
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #3b82f6;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
-}
-
 /* Apple-style Glassmorphism */
 .glass-card {
     background: rgba(255, 255, 255, 0.7);
