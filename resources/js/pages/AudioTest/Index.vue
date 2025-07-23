@@ -212,17 +212,13 @@ const startStreaming = async () => {
         
         // Get microphone stream
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        console.log(micStream)
         // Check if audio loopback is available
-        console.log('Audio loopback available:', !!(window as any).audioLoopback)
         
         // Enable audio loopback for system audio if available
         if ((window as any).audioLoopback) {
             try {
                 await (window as any).audioLoopback.enableLoopback()
-                console.log('Audio loopback enabled')
-            } catch (e) {
-                console.log('Failed to enable audio loopback:', e)
+            } catch {
             }
         }
         
@@ -236,9 +232,7 @@ const startStreaming = async () => {
         if ((window as any).audioLoopback) {
             try {
                 await (window as any).audioLoopback.disableLoopback()
-                console.log('Audio loopback disabled')
-            } catch (e) {
-                console.log('Failed to disable audio loopback:', e)
+            } catch {
             }
         }
         

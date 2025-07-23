@@ -345,7 +345,6 @@ const startCall = async () => {
         await initializeAgents(data.ephemeralKey);
         
         // Start audio capture
-        console.log('🎤 Starting audio capture...');
         await startAudioCapture();
         
         realtimeStore.setActiveState(true);
