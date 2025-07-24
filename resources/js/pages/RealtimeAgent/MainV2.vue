@@ -383,9 +383,9 @@ const endCall = async () => {
         }
         
         // Disable audio loopback if enabled
-        if ((window as any).audioLoopback) {
+        if ((window as any).Native?.ipcRendererInvoke) {
             try {
-                await (window as any).audioLoopback.disableLoopback();
+                await (window as any).Native.ipcRendererInvoke['disable-loopback-audio']();
             } catch {
                 // Ignore errors on cleanup
             }
@@ -783,12 +783,12 @@ const startAudioCapture = async () => {
         try {
             
             // Check if audio loopback is available
-            if (!(window as any).audioLoopback) {
-                throw new Error('Audio loopback not available');
+            if (!(window as any).Native?.ipcRendererInvoke) {
+                throw new Error('Native IPC not available');
             }
             
             // Enable audio loopback
-            await (window as any).audioLoopback.enableLoopback();
+            await (window as any).Native.ipcRendererInvoke['enable-loopback-audio']();
             
             // Get system audio stream using getDisplayMedia
             try {
@@ -861,7 +861,7 @@ const startAudioCapture = async () => {
             } catch (error) {
                 // Disable loopback if getDisplayMedia failed
                 try {
-                    await (window as any).audioLoopback.disableLoopback();
+                    await (window as any).Native.ipcRendererInvoke['disable-loopback-audio']();
                 } catch {
                     // Ignore cleanup errors
                 }
