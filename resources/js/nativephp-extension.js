@@ -41,24 +41,6 @@ export default {
       console.log('[Extension] electron-audio-loopback not available:', error.message);
       console.log('[Extension] Falling back to manual implementation...');
     }
-    
-    // Method 2: Manual implementation if package is not available
-    // Set Chromium feature flags for audio loopback support
-    const features = [
-      'MacLoopbackAudioForScreenShare',
-      'PulseaudioLoopbackForScreenShare', 
-      'MacSckSystemAudioLoopbackOverride'
-    ];
-    
-    const existingFeatures = app.commandLine.getSwitchValue('enable-features');
-    const newFeatures = existingFeatures 
-      ? `${existingFeatures},${features.join(',')}` 
-      : features.join(',');
-      
-    app.commandLine.appendSwitch('enable-features', newFeatures);
-    console.log('[Extension] Set Chromium feature flags for audio loopback');
-    
-    audioLoopbackState.initialized = true;
   },
   
   // Hook into Electron lifecycle - called after app is ready
