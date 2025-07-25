@@ -7,9 +7,8 @@ This document comprehensively covers the implementation of the NativePHP extensi
 ## Problem Statement
 
 ### Initial Issues
-1. **Laravel 12.21.0 Error**: `Call to undefined function Illuminate\Support\mb_split()` when running `php artisan native:serve`
-2. **Vendor File Modifications**: Audio loopback and media permissions required modifying NativePHP vendor files
-3. **Lost on Updates**: All customizations were lost when running `composer update`
+1. **Vendor File Modifications**: Audio loopback and media permissions required modifying NativePHP vendor files
+2. **Lost on Updates**: All customizations were lost when running `composer update`
 
 ### Solution Approach
 1. Downgrade Laravel to 12.20.0 to fix mb_split error
@@ -31,7 +30,7 @@ This document comprehensively covers the implementation of the NativePHP extensi
 
 **Symlink Setup**:
 ```bash
-vendor/nativephp/electron -> ../../nativephp-electron/
+vendor/nativephp/electron -> nativephp-electron/
 ```
 
 **composer.json Configuration**:

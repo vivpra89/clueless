@@ -1,29 +1,64 @@
-// NativePHP Extension Skeleton for Testing
-// This is a minimal extension file to test the extensibility system
+// NativePHP Extension for Audio Loopback Support
+// This extension provides system audio capture functionality for Electron apps
 
-import { systemPreferences } from 'electron';
+import { systemPreferences, app, ipcMain, session, desktopCapturer } from 'electron';
 
-// Dynamic import for electron-audio-loopback (may not be installed)
-let initAudioLoopback = null;
+// Store audio loopback state
+const audioLoopbackState = {
+  initialized: false,
+  handlerSet: false
+};
 
 export default {
   // Hook into Electron lifecycle - called before app is ready
   beforeReady: async (app) => {
-    console.log('[Extension Test] beforeReady hook called');
+    console.log('[Extension] beforeReady hook called');
     
-    // Try to load and initialize electron-audio-loopback
+    // Method 1: Try to use electron-audio-loopback package if available
     try {
       const audioLoopbackModule = await import('electron-audio-loopback');
-      initAudioLoopback = audioLoopbackModule.initMain;
+      const initAudioLoopback = audioLoopbackModule.initMain;
       
       if (initAudioLoopback) {
+        console.log('[Extension] Initializing electron-audio-loopback package...');
         initAudioLoopback();
-        console.log('[Extension Test] electron-audio-loopback initialized successfully');
+        audioLoopbackState.initialized = true;
+        console.log('[Extension] electron-audio-loopback initialized successfully');
+        
+        // The package should register its own IPC handlers, but let's verify
+        setTimeout(() => {
+          const hasEnableHandler = ipcMain.listenerCount('enable-loopback-audio') > 0;
+          const hasDisableHandler = ipcMain.listenerCount('disable-loopback-audio') > 0;
+          console.log('[Extension] IPC handler check:', {
+            'enable-loopback-audio': hasEnableHandler,
+            'disable-loopback-audio': hasDisableHandler
+          });
+        }, 100);
+        
+        return; // Package handles everything, no need for manual implementation
       }
     } catch (error) {
-      console.log('[Extension Test] electron-audio-loopback not available:', error.message);
-      console.log('[Extension Test] Audio loopback features will not be available');
+      console.log('[Extension] electron-audio-loopback not available:', error.message);
+      console.log('[Extension] Falling back to manual implementation...');
     }
+    
+    // Method 2: Manual implementation if package is not available
+    // Set Chromium feature flags for audio loopback support
+    const features = [
+      'MacLoopbackAudioForScreenShare',
+      'PulseaudioLoopbackForScreenShare', 
+      'MacSckSystemAudioLoopbackOverride'
+    ];
+    
+    const existingFeatures = app.commandLine.getSwitchValue('enable-features');
+    const newFeatures = existingFeatures 
+      ? `${existingFeatures},${features.join(',')}` 
+      : features.join(',');
+      
+    app.commandLine.appendSwitch('enable-features', newFeatures);
+    console.log('[Extension] Set Chromium feature flags for audio loopback');
+    
+    audioLoopbackState.initialized = true;
   },
   
   // Hook into Electron lifecycle - called after app is ready
@@ -43,6 +78,9 @@ export default {
   
   // Custom IPC handlers for renderer communication
   ipcHandlers: {
+    // Audio loopback handlers are now provided by the electron-audio-loopback package
+    // We don't need to register them here to avoid conflicts
+    
     'test:ping': async (event, ...args) => {
       console.log('[Extension Test] IPC handler test:ping called', { args });
       return { 
@@ -75,9 +113,35 @@ export default {
       };
     }
   },
+
+  // Preload script extensions - APIs to expose to the renderer  
+  // NOTE: The NativePHP preload already exposes window.audioLoopback, so we don't need to do it here
+  // The frontend should use window.Native.ipcRendererInvoke['enable-loopback-audio']() which is already available
   
   // Custom API endpoints accessible from Laravel
   apiRoutes: (router) => {
+    // Screen recording permission check for macOS
+    router.get('/api/system/screen-recording-access', (req, res) => {
+      console.log('[Extension] API route GET /api/system/screen-recording-access called');
+      
+      if (process.platform === 'darwin') {
+        // On macOS, check if we have screen recording permission
+        const status = systemPreferences.getMediaAccessStatus('screen');
+        res.json({ 
+          status,
+          platform: 'darwin',
+          hasAccess: status === 'granted'
+        });
+      } else {
+        // Non-macOS platforms don't need this permission
+        res.json({ 
+          status: 'granted',
+          platform: process.platform,
+          hasAccess: true
+        });
+      }
+    });
+    
     // Test endpoint - GET
     router.get('/api/test/status', (req, res) => {
       console.log('[Extension Test] API route GET /api/test/status called');

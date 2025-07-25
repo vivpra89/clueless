@@ -781,30 +781,54 @@ const startAudioCapture = async () => {
         
         // Try to setup system audio capture using electron-audio-loopback
         try {
+            console.log('[MainV2] Starting system audio capture setup...');
             
             // Check if audio loopback is available
             if (!(window as any).Native?.ipcRendererInvoke) {
+                console.error('[MainV2] Native IPC not available');
                 throw new Error('Native IPC not available');
             }
             
             // Enable audio loopback
+            console.log('[MainV2] Enabling audio loopback...');
             await (window as any).Native.ipcRendererInvoke['enable-loopback-audio']();
+            console.log('[MainV2] Audio loopback enabled successfully');
+            
+            // Add a small delay to ensure the handler is fully set up
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Get system audio stream using getDisplayMedia
             try {
+                console.log('[MainV2] Requesting display media with audio...');
                 const displayStream = await navigator.mediaDevices.getDisplayMedia({
                     audio: true,
                     video: true
                 });
                 
+                console.log('[MainV2] Got display stream:', {
+                    tracks: displayStream.getTracks().map(t => ({ kind: t.kind, label: t.label, enabled: t.enabled }))
+                });
+                
                 // Remove video tracks, keep only audio
                 const videoTracks = displayStream.getTracks().filter(t => t.kind === 'video');
+                const audioTracks = displayStream.getTracks().filter(t => t.kind === 'audio');
+                
+                console.log('[MainV2] Track breakdown:', {
+                    video: videoTracks.length,
+                    audio: audioTracks.length
+                });
+                
                 videoTracks.forEach(t => {
                     t.stop();
                     displayStream.removeTrack(t);
                 });
                 
+                if (audioTracks.length === 0) {
+                    throw new Error('No audio tracks found in display stream');
+                }
+                
                 systemStream = displayStream;
+                console.log('[MainV2] System stream ready with audio tracks');
                 
                 // Create audio processor for system audio
                 const systemSource = audioContext.createMediaStreamSource(systemStream);
