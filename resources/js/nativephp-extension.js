@@ -1,8 +1,9 @@
 // NativePHP Extension for Audio Loopback Support
 // This extension provides system audio capture functionality for Electron apps
 
-import { systemPreferences, app, ipcMain, session, desktopCapturer } from 'electron';
+import { systemPreferences, app, ipcMain, session, desktopCapturer, shell } from 'electron';
 
+    
 // Store audio loopback state
 const audioLoopbackState = {
   initialized: false,
@@ -63,6 +64,99 @@ export default {
     // Audio loopback handlers are now provided by the electron-audio-loopback package
     // We don't need to register them here to avoid conflicts
     
+    // Microphone permission handlers
+    'check-microphone-permission': async (event) => {
+      console.log('[Extension] IPC handler check-microphone-permission called');
+      
+      if (process.platform !== 'darwin') {
+        return { status: 'authorized' };
+      }
+      
+      try {
+        const permissions = await import('node-mac-permissions');
+        const status = permissions.default.getAuthStatus('microphone');
+        console.log('[Extension] Microphone permission status:', status);
+        return { status };
+      } catch (error) {
+        console.error('[Extension] Error checking microphone permission:', error);
+        return { status: 'not-determined', error: error.message };
+      }
+    },
+    
+    'request-microphone-permission': async (event) => {
+      console.log('[Extension] IPC handler request-microphone-permission called');
+      
+      if (process.platform !== 'darwin') {
+        return { granted: true };
+      }
+      
+      try {
+        const permissions = await import('node-mac-permissions');
+        const status = await permissions.default.askForMicrophoneAccess();
+        console.log('[Extension] Microphone permission request result:', status);
+        return { granted: status === 'authorized' };
+      } catch (error) {
+        console.error('[Extension] Error requesting microphone permission:', error);
+        return { granted: false, error: error.message };
+      }
+    },
+    
+    // Screen capture permission handlers
+    'check-screen-capture-permission': async (event) => {
+      console.log('[Extension] IPC handler check-screen-capture-permission called');
+      
+      if (process.platform !== 'darwin') {
+        return { status: 'authorized' };
+      }
+      
+      try {
+        const permissions = await import('node-mac-permissions');
+        const status = permissions.default.getAuthStatus('screen');
+        console.log('[Extension] Screen capture permission status:', status);
+        return { status };
+      } catch (error) {
+        console.error('[Extension] Error checking screen capture permission:', error);
+        return { status: 'not-determined', error: error.message };
+      }
+    },
+    
+    'request-screen-capture-permission': async (event) => {
+      console.log('[Extension] IPC handler request-screen-capture-permission called');
+      
+      if (process.platform !== 'darwin') {
+        return { granted: true };
+      }
+      
+      try {
+        const permissions = await import('node-mac-permissions');
+        // askForScreenCaptureAccess returns a boolean directly
+        const granted = await permissions.default.askForScreenCaptureAccess();
+        console.log('[Extension] Screen capture permission request result:', granted);
+        return { granted };
+      } catch (error) {
+        console.error('[Extension] Error requesting screen capture permission:', error);
+        return { granted: false, error: error.message };
+      }
+    },
+    
+    // Open privacy settings handler
+    'open-privacy-settings': async (event) => {
+      console.log('[Extension] IPC handler open-privacy-settings called');
+      
+      if (process.platform !== 'darwin') {
+        return { success: true };
+      }
+      
+      try {
+        await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy');
+        return { success: true };
+      } catch (error) {
+        console.error('[Extension] Error opening privacy settings:', error);
+        return { success: false, error: error.message };
+      }
+    },
+    
+    // Test handler to verify IPC is working
     'test:ping': async (event, ...args) => {
       console.log('[Extension Test] IPC handler test:ping called', { args });
       return { 

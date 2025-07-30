@@ -30,8 +30,7 @@ class NativeAppServiceProvider implements ProvidesPhpIni
             ->resizable()
             ->position(50, 50)
             ->webPreferences([
-                'nodeIntegration' => true,
-                'contextIsolation' => false,
+                'contextIsolation' => true,
                 'webSecurity' => false,
                 'backgroundThrottling' => false,
                 'sandbox' => false,

@@ -16,15 +16,6 @@
         "realtime-transcription"
     ],
     "license": "MIT",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "nativephp-electron",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
     "require": {
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
@@ -96,6 +87,12 @@
             "dont-discover": []
         }
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./resources/nativephp-electron"
+        }
+    ],
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
