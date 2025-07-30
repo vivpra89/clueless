@@ -281,6 +281,7 @@ const checkScreenPermission = async () => {
     }
 };
 
+
 const requestScreenPermission = async () => {
     if (screenPermissionLoading.value) return;
     
