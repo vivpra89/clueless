@@ -89,8 +89,11 @@
     },
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/vijaythecoder/nativephp-electron"
+            "type": "path",
+            "url": "./nativephp-electron",
+            "options": {
+                "symlink": true
+            }
         }
     ],
     "config": {

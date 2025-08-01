@@ -14,11 +14,20 @@ interface Remote {
     };
 }
 
+interface MacPermissions {
+    screenProtection: {
+        checkSupport: () => Promise<{ supported: boolean; platform?: string; reason?: string; error?: string }>;
+        set: (enabled: boolean) => Promise<{ success: boolean; enabled?: boolean; error?: string }>;
+        getStatus: () => Promise<{ status: string; reason?: string; error?: string }>;
+    };
+}
+
 declare global {
     interface Window {
         electronAPI?: ElectronAPI;
         remote?: Remote;
         electron?: any;
+        macPermissions?: MacPermissions;
     }
 }
 
@@ -39,11 +48,19 @@ export function useScreenProtection() {
     };
 
     // Check if protection is supported
-    const checkSupport = () => {
+    const checkSupport = async () => {
         // Try different methods to access Electron APIs
         try {
+            // Method 1: Use new IPC handlers via macPermissions API
+            if (window.macPermissions?.screenProtection) {
+                const result = await window.macPermissions.screenProtection.checkSupport();
+                if (result.supported) {
+                    isProtectionSupported.value = true;
+                    return true;
+                }
+            }
             
-            // Method 1: Check if window.remote is available (NativePHP exposes this)
+            // Method 2: Check if window.remote is available (NativePHP exposes this)
             if (window.remote && typeof window.remote.getCurrentWindow === 'function') {
                 const currentWindow = window.remote.getCurrentWindow();
                 if (currentWindow && typeof currentWindow.setContentProtection === 'function') {
@@ -52,14 +69,15 @@ export function useScreenProtection() {
                 }
             }
 
-            // Method 2: Check custom electronAPI (for custom preload)
+            // Method 3: Check custom electronAPI (for custom preload)
             if (window.electronAPI?.screenProtection?.isContentProtectionSupported) {
                 isProtectionSupported.value = window.electronAPI.screenProtection.isContentProtectionSupported();
                 return isProtectionSupported.value;
             }
 
-            // Method 3: Check if we're in Electron environment
+            // Method 4: Check if we're in Electron environment
             if (window.electron || (window as any).process?.versions?.electron) {
+                console.log('Electron detected but no screen protection API available');
             }
         } catch (error) {
             console.error('Error checking screen protection support:', error);
@@ -71,7 +89,7 @@ export function useScreenProtection() {
     };
 
     // Toggle screen protection
-    const toggleProtection = () => {
+    const toggleProtection = async () => {
         if (!isProtectionSupported.value) {
             return false;
         }
@@ -80,8 +98,20 @@ export function useScreenProtection() {
         let success = false;
 
         try {
-            // Method 1: Try window.remote first (NativePHP)
-            if (window.remote && typeof window.remote.getCurrentWindow === 'function') {
+            // Method 1: Use new IPC handlers via macPermissions API
+            if (window.macPermissions?.screenProtection) {
+                try {
+                    const result = await window.macPermissions.screenProtection.set(newState);
+                    if (result.success) {
+                        success = true;
+                    }
+                } catch (error) {
+                    console.error('Error using macPermissions for screen protection:', error);
+                }
+            }
+            
+            // Method 2: Try window.remote (NativePHP) as fallback
+            if (!success && window.remote && typeof window.remote.getCurrentWindow === 'function') {
                 const currentWindow = window.remote.getCurrentWindow();
                 
                 if (currentWindow && typeof currentWindow.setContentProtection === 'function') {
@@ -116,12 +146,11 @@ export function useScreenProtection() {
                     } catch {
                         // Silently ignore errors
                     }
-                } else {
                 }
             }
 
-            // Method 2: Try custom electronAPI
-            else if (window.electronAPI?.screenProtection?.setContentProtection) {
+            // Method 3: Try custom electronAPI
+            if (!success && window.electronAPI?.screenProtection?.setContentProtection) {
                 success = window.electronAPI.screenProtection.setContentProtection(newState);
             }
 
@@ -139,7 +168,9 @@ export function useScreenProtection() {
 
                 return true;
             }
-        } catch {}
+        } catch (error) {
+            console.error('Error toggling screen protection:', error);
+        }
 
         return false;
     };
@@ -166,10 +197,21 @@ export function useScreenProtection() {
     };
 
     // Check if protection is actually active
-    const verifyProtection = () => {
+    const verifyProtection = async () => {
         if (!isProtectionSupported.value) return false;
         
         try {
+            // Method 1: Use new IPC handlers via macPermissions API
+            if (window.macPermissions?.screenProtection) {
+                const result = await window.macPermissions.screenProtection.getStatus();
+                if (result.status === 'active') {
+                    return true;
+                } else if (result.status === 'inactive') {
+                    return false;
+                }
+            }
+            
+            // Method 2: Try window.remote as fallback
             if (window.remote && typeof window.remote.getCurrentWindow === 'function') {
                 const currentWindow = window.remote.getCurrentWindow();
                 
@@ -195,15 +237,15 @@ export function useScreenProtection() {
     // Initialize on mount
     onMounted(() => {
         // Add a small delay to ensure Electron APIs are loaded
-        setTimeout(() => {
-            if (checkSupport()) {
+        setTimeout(async () => {
+            if (await checkSupport()) {
                 // Load saved preference
                 const savedPreference = loadPreference();
                 if (savedPreference) {
-                    enableProtection();
+                    await enableProtection();
                     // Verify after enabling
-                    setTimeout(() => {
-                        verifyProtection();
+                    setTimeout(async () => {
+                        await verifyProtection();
                     }, 500);
                 }
             }
