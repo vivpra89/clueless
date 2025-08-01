@@ -692,6 +692,7 @@ import { useVariables } from '@/composables/useVariables';
 import { audioHealthMonitor, type AudioHealthStatus } from '@/services/audioHealthCheck';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { useSettingsStore } from '@/stores/settings';
 // import type { TemplateResolution } from '@/types/variable'
 import ContextualInformation from '@/components/ContextualInformation.vue';
 
@@ -2565,6 +2566,15 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 
 // Demo data for visualization
 onMounted(async () => {
+    // Initialize settings store with composable support status
+    const settingsStore = useSettingsStore();
+    
+    // Wait a bit for composables to check support
+    setTimeout(() => {
+        settingsStore.setOverlaySupported(isOverlaySupported.value);
+        settingsStore.setProtectionSupported(isProtectionSupported.value);
+    }, 200);
+    
     // Check API key status first
     try {
         const response = await axios.get('/api/openai/status');
