@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f4a840679fee146bd80d47fc81c94c46",
+    "content-hash": "a67ed7a449069361a31d6b7b8985e2d8",
     "packages": [
         {
             "name": "brick/math",
@@ -2181,10 +2181,16 @@
         {
             "name": "nativephp/electron",
             "version": "dev-feature/macos-permissions-enhanced",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/vijaythecoder/nativephp-electron.git",
+                "reference": "6e92dcb1eb2cefc3945626ca9e71fc17550cfac0"
+            },
             "dist": {
-                "type": "path",
-                "url": "/Users/vijaytupakula/Development/Bootstrapguru/clueless/resources/nativephp-electron",
-                "reference": "59d8f665769a641a8fd58ed21385ba64a6d63e71"
+                "type": "zip",
+                "url": "https://api.github.com/repos/vijaythecoder/nativephp-electron/zipball/6e92dcb1eb2cefc3945626ca9e71fc17550cfac0",
+                "reference": "6e92dcb1eb2cefc3945626ca9e71fc17550cfac0",
+                "shasum": ""
             },
             "require": {
                 "ext-zip": "*",
@@ -2274,6 +2280,9 @@
                 "laravel",
                 "nativephp"
             ],
+            "support": {
+                "source": "https://github.com/vijaythecoder/nativephp-electron/tree/feature/macos-permissions-enhanced"
+            },
             "funding": [
                 {
                     "type": "github",
@@ -2284,10 +2293,7 @@
                     "url": "https://opencollective.com/nativephp"
                 }
             ],
-            "transport-options": {
-                "symlink": true,
-                "relative": false
-            }
+            "time": "2025-07-30T22:59:17+00:00"
         },
         {
             "name": "nativephp/laravel",

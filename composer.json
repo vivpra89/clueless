@@ -21,7 +21,7 @@
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "12.20.0",
         "laravel/tinker": "^2.10.1",
-        "nativephp/electron": "@dev",
+        "nativephp/electron": "dev-feature/macos-permissions-enhanced",
         "openai-php/laravel": "^0.14.0",
         "pusher/pusher-php-server": "^7.2",
         "tightenco/ziggy": "^2.4"
@@ -89,11 +89,8 @@
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "/Users/vijaytupakula/Development/Bootstrapguru/clueless/resources/nativephp-electron",
-            "options": {
-                "symlink": true
-            }
+            "type": "vcs",
+            "url": "https://github.com/vijaythecoder/nativephp-electron"
         }
     ],
     "config": {
