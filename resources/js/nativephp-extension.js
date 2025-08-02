@@ -66,8 +66,6 @@ export default {
     
     // Microphone permission handlers
     'check-microphone-permission': async (event) => {
-      console.log('[Extension] IPC handler check-microphone-permission called');
-      
       if (process.platform !== 'darwin') {
         return { status: 'authorized' };
       }
@@ -75,7 +73,6 @@ export default {
       try {
         const permissions = await import('node-mac-permissions');
         const status = permissions.default.getAuthStatus('microphone');
-        console.log('[Extension] Microphone permission status:', status);
         return { status };
       } catch (error) {
         console.error('[Extension] Error checking microphone permission:', error);
@@ -84,8 +81,6 @@ export default {
     },
     
     'request-microphone-permission': async (event) => {
-      console.log('[Extension] IPC handler request-microphone-permission called');
-      
       if (process.platform !== 'darwin') {
         return { granted: true };
       }
@@ -93,7 +88,6 @@ export default {
       try {
         const permissions = await import('node-mac-permissions');
         const status = await permissions.default.askForMicrophoneAccess();
-        console.log('[Extension] Microphone permission request result:', status);
         return { granted: status === 'authorized' };
       } catch (error) {
         console.error('[Extension] Error requesting microphone permission:', error);
@@ -103,8 +97,6 @@ export default {
     
     // Screen capture permission handlers
     'check-screen-capture-permission': async (event) => {
-      console.log('[Extension] IPC handler check-screen-capture-permission called');
-      
       if (process.platform !== 'darwin') {
         return { status: 'authorized' };
       }
@@ -112,7 +104,6 @@ export default {
       try {
         const permissions = await import('node-mac-permissions');
         const status = permissions.default.getAuthStatus('screen');
-        console.log('[Extension] Screen capture permission status:', status);
         return { status };
       } catch (error) {
         console.error('[Extension] Error checking screen capture permission:', error);
@@ -121,8 +112,6 @@ export default {
     },
     
     'request-screen-capture-permission': async (event) => {
-      console.log('[Extension] IPC handler request-screen-capture-permission called');
-      
       if (process.platform !== 'darwin') {
         return { granted: true };
       }
@@ -131,7 +120,6 @@ export default {
         const permissions = await import('node-mac-permissions');
         // askForScreenCaptureAccess returns a boolean directly
         const granted = await permissions.default.askForScreenCaptureAccess();
-        console.log('[Extension] Screen capture permission request result:', granted);
         return { granted };
       } catch (error) {
         console.error('[Extension] Error requesting screen capture permission:', error);

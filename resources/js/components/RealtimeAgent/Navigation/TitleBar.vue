@@ -48,15 +48,14 @@
             <!-- Screen Protection Toggle -->
             <ScreenProtectionToggle />
 
-            <!-- Microphone Permission Toggle -->
+            <!-- Microphone Permission Toggle (only show when not authorized) -->
             <button
+                v-if="micPermissionStatus !== 'authorized'"
                 @click="requestMicrophonePermission"
                 :disabled="micPermissionLoading"
                 class="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors"
                 :class="[
-                    micPermissionStatus === 'authorized' 
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
-                        : micPermissionStatus === 'denied'
+                    micPermissionStatus === 'denied'
                         ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30'
                         : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/30',
                     { 'opacity-50 cursor-not-allowed': micPermissionLoading }
@@ -70,15 +69,14 @@
                 {{ micPermissionText }}
             </button>
 
-            <!-- Screen Capture Permission Toggle -->
+            <!-- Screen Capture Permission Toggle (only show when not authorized) -->
             <button
+                v-if="screenPermissionStatus !== 'authorized'"
                 @click="requestScreenPermission"
                 :disabled="screenPermissionLoading"
                 class="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors"
                 :class="[
-                    screenPermissionStatus === 'authorized' 
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
-                        : screenPermissionStatus === 'denied'
+                    screenPermissionStatus === 'denied'
                         ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30'
                         : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/30',
                     { 'opacity-50 cursor-not-allowed': screenPermissionLoading }
@@ -253,7 +251,6 @@ const requestMicrophonePermission = async () => {
             const result = await (window as any).macPermissions.requestPermission('microphone');
             if (result.success) {
                 micPermissionStatus.value = result.status || 'not determined';
-                console.log('Microphone permission result:', result.status);
             } else {
                 console.error('Failed to request microphone permission:', result.error);
             }
@@ -292,7 +289,6 @@ const requestScreenPermission = async () => {
             const result = await (window as any).macPermissions.requestPermission('screen');
             if (result.success) {
                 screenPermissionStatus.value = result.status || 'not determined';
-                console.log('Screen capture permission result:', result.status);
             } else {
                 console.error('Failed to request screen capture permission:', result.error);
             }

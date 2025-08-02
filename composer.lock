@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c631a66cad6e197ac79e1b5a0ff95041",
+    "content-hash": "dbb5d807ea9f93f41f0ceac5a683311b",
     "packages": [
         {
             "name": "brick/math",
@@ -2180,11 +2180,17 @@
         },
         {
             "name": "nativephp/electron",
-            "version": "dev-feature/macos-permissions-enhanced",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/vijaythecoder/nativephp-electron.git",
+                "reference": "6089fda1c5f56d3c533216ebd8e64dbed9af9af3"
+            },
             "dist": {
-                "type": "path",
-                "url": "./nativephp-electron",
-                "reference": "6e92dcb1eb2cefc3945626ca9e71fc17550cfac0"
+                "type": "zip",
+                "url": "https://api.github.com/repos/vijaythecoder/nativephp-electron/zipball/6089fda1c5f56d3c533216ebd8e64dbed9af9af3",
+                "reference": "6089fda1c5f56d3c533216ebd8e64dbed9af9af3",
+                "shasum": ""
             },
             "require": {
                 "ext-zip": "*",
@@ -2209,6 +2215,7 @@
                 "phpstan/phpstan-phpunit": "^1.0|^2.0",
                 "spatie/laravel-ray": "^1.26"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -2274,6 +2281,9 @@
                 "laravel",
                 "nativephp"
             ],
+            "support": {
+                "source": "https://github.com/vijaythecoder/nativephp-electron/tree/main"
+            },
             "funding": [
                 {
                     "type": "github",
@@ -2284,10 +2294,7 @@
                     "url": "https://opencollective.com/nativephp"
                 }
             ],
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2025-08-02T00:35:54+00:00"
         },
         {
             "name": "nativephp/laravel",

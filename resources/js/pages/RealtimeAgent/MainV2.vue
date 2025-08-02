@@ -381,7 +381,7 @@ const startCall = async () => {
         realtimeStore.addTranscriptGroup({
             id: `system-${Date.now()}`,
             role: 'system',
-            messages: [{ text: 'Call started. Coach is ready to assist.', timestamp: Date.now() }],
+            messages: [{ text: '📞 Call started', timestamp: Date.now() }],
             startTime: Date.now(),
         });
         
@@ -793,17 +793,6 @@ const requestScreenCapturePermission = async () => {
 const checkAndRequestPermissions = async () => {
     try {
         
-        // First show a friendly message about checking permissions
-        realtimeStore.addTranscriptGroup({
-            id: `system-info-${Date.now()}`,
-            role: 'system',
-            messages: [{
-                text: '🔍 Checking system permissions...',
-                timestamp: Date.now()
-            }],
-            startTime: Date.now(),
-            systemCategory: 'info',
-        });
         
         // Check if macPermissions API is available
         if (!(window as any).macPermissions) {
@@ -892,31 +881,6 @@ const checkAndRequestPermissions = async () => {
             }
         }
         
-        if (microphoneGranted && screenGranted) {
-            // Show success message if all permissions granted
-            realtimeStore.addTranscriptGroup({
-                id: `system-success-${Date.now()}`,
-                role: 'system',
-                messages: [{
-                    text: '✅ All permissions granted. Ready to start the call!',
-                    timestamp: Date.now()
-                }],
-                startTime: Date.now(),
-                systemCategory: 'success',
-            });
-        } else if (microphoneGranted) {
-            // Show success message for microphone only
-            realtimeStore.addTranscriptGroup({
-                id: `system-success-${Date.now()}`,
-                role: 'system',
-                messages: [{
-                    text: '✅ Microphone permission granted. Ready to start the call!',
-                    timestamp: Date.now()
-                }],
-                startTime: Date.now(),
-                systemCategory: 'success',
-            });
-        }
         
         return {
             microphone: { granted: microphoneGranted },
@@ -1068,13 +1032,6 @@ const startAudioCapture = async (hasScreenCapturePermission: boolean = false) =>
                     });
                 });
                 
-                realtimeStore.addTranscriptGroup({
-                    id: `system-${Date.now()}`,
-                    role: 'system',
-                    messages: [{ text: '✅ Dual audio capture active: Microphone (You) + System Audio (Customer)', timestamp: Date.now() }],
-                    startTime: Date.now(),
-                    systemCategory: 'success',
-                });
                     
             } catch (error) {
                 realtimeStore.setSystemAudioActive(false);

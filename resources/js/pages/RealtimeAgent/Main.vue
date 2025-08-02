@@ -2044,7 +2044,6 @@ const setupAudioCapture = async () => {
                 // Attach to health monitor
                 audioHealthMonitor.attach(systemAudioCapture.value);
 
-                addToTranscript('system', '✅ Dual audio capture active: Microphone (You) + System Audio (Customer)', 'success');
             } else {
                 throw new Error('System audio capture not available');
             }
