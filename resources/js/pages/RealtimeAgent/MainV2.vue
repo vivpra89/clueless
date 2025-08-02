@@ -64,11 +64,16 @@
             </div>
         </div>
 
+        <!-- Onboarding Modal -->
+        <OnboardingModal 
+            v-model:open="showOnboardingModal"
+            @complete="handleOnboardingComplete"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, watch, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { 
@@ -90,6 +95,7 @@ import TalkingPoints from '@/components/RealtimeAgent/Content/TalkingPoints.vue'
 import CommitmentsList from '@/components/RealtimeAgent/Actions/CommitmentsList.vue';
 import PostCallActions from '@/components/RealtimeAgent/Actions/PostCallActions.vue';
 import ContextualInformation from '@/components/ContextualInformation.vue';
+import OnboardingModal from '@/components/RealtimeAgent/OnboardingModal.vue';
 
 // Utils
 
@@ -107,6 +113,12 @@ import { useScreenProtection } from '@/composables/useScreenProtection';
 const realtimeStore = useRealtimeAgentStore();
 const settingsStore = useSettingsStore();
 const openaiStore = useOpenAIStore();
+
+// Onboarding state
+const showOnboardingModal = ref(false);
+const hasApiKey = ref(false);
+const hasMicPermission = ref(false);
+const hasScreenPermission = ref(false);
 
 // Composables
 const overlayMode = useOverlayMode();
@@ -287,9 +299,54 @@ const handleFunctionCall = (name: string, args: any) => {
     }
 };
 
+// Check onboarding requirements
+const checkOnboardingRequirements = async () => {
+    // Check if onboarding was already completed
+    const onboardingCompleted = localStorage.getItem('onboarding_completed') === 'true';
+    
+    // Check API key
+    try {
+        const apiResponse = await axios.get('/api/openai/status');
+        hasApiKey.value = apiResponse.data.hasApiKey || false;
+    } catch (error) {
+        console.error('Failed to check API key status:', error);
+        hasApiKey.value = false;
+    }
+    
+    // Check permissions if macPermissions API is available
+    if ((window as any).macPermissions) {
+        try {
+            const micResult = await (window as any).macPermissions.checkPermission('microphone');
+            hasMicPermission.value = micResult.success && micResult.status === 'authorized';
+            
+            const screenResult = await (window as any).macPermissions.checkPermission('screen');
+            hasScreenPermission.value = screenResult.success && screenResult.status === 'authorized';
+        } catch (error) {
+            console.error('Failed to check permissions:', error);
+        }
+    }
+    
+    // Show onboarding modal if any requirement is missing
+    if (!onboardingCompleted || !hasApiKey.value || !hasMicPermission.value) {
+        showOnboardingModal.value = true;
+    }
+};
+
+// Handle onboarding completion
+const handleOnboardingComplete = async () => {
+    // Re-check requirements
+    await checkOnboardingRequirements();
+    
+    // If everything is good, modal will close automatically
+    showOnboardingModal.value = false;
+};
+
 // Initialize function
 const initialize = async () => {
     try {
+        // Check onboarding requirements first
+        await checkOnboardingRequirements();
+        
         // Fetch templates
         const response = await axios.get('/templates');
         // The response has templates wrapped in a templates property
@@ -318,6 +375,15 @@ const toggleSession = () => {
 
 
 const startCall = async () => {
+    // First check if all requirements are met
+    await checkOnboardingRequirements();
+    
+    // If onboarding modal is shown, don't start the call
+    if (showOnboardingModal.value) {
+        realtimeStore.setConnectionStatus('disconnected');
+        return;
+    }
+    
     let permissions;
     try {
         realtimeStore.setConnectionStatus('connecting');
