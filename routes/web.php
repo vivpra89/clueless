@@ -10,7 +10,7 @@ Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('dashboard');
     }
-    
+
     return Inertia::render('Welcome');
 })->name('home');
 
@@ -22,7 +22,6 @@ Route::get('/onboarding', function () {
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->name('dashboard');
-
 
 // NativePHP Desktop Routes
 Route::get('/realtime-agent', function () {
@@ -38,7 +37,6 @@ Route::get('/realtime-agent-v2', function () {
 Route::get('/audio-test', [\App\Http\Controllers\AudioTestController::class, 'index'])
     ->name('audio-test');
 
-
 // Realtime API Routes
 Route::post('/api/realtime/ephemeral-key', [\App\Http\Controllers\RealtimeController::class, 'generateEphemeralKey'])
     ->name('realtime.ephemeral-key');
@@ -46,6 +44,7 @@ Route::post('/api/realtime/ephemeral-key', [\App\Http\Controllers\RealtimeContro
 // API Key Status Route
 Route::get('/api/openai/status', function () {
     $apiKeyService = app(\App\Services\ApiKeyService::class);
+
     return response()->json([
         'hasApiKey' => $apiKeyService->hasApiKey(),
     ]);
@@ -54,15 +53,15 @@ Route::get('/api/openai/status', function () {
 // Open external URL in default browser (for NativePHP)
 Route::post('/api/open-external', function (\Illuminate\Http\Request $request) {
     $url = $request->input('url');
-    
+
     // Validate URL
-    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+    if (! filter_var($url, FILTER_VALIDATE_URL)) {
         return response()->json(['error' => 'Invalid URL'], 400);
     }
-    
+
     // Use NativePHP Shell to open in default browser
     \Native\Laravel\Facades\Shell::openExternal($url);
-    
+
     return response()->json(['success' => true]);
 })->name('api.open-external');
 

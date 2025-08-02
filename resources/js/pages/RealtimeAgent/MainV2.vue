@@ -64,11 +64,6 @@
             </div>
         </div>
 
-        <!-- Customer Info Modal -->
-        <CustomerInfoModal 
-            @start-with-info="startWithCustomerInfo"
-            @skip="skipCustomerInfo"
-        />
     </div>
 </template>
 
@@ -94,7 +89,6 @@ import DiscussionTopics from '@/components/RealtimeAgent/Content/DiscussionTopic
 import TalkingPoints from '@/components/RealtimeAgent/Content/TalkingPoints.vue';
 import CommitmentsList from '@/components/RealtimeAgent/Actions/CommitmentsList.vue';
 import PostCallActions from '@/components/RealtimeAgent/Actions/PostCallActions.vue';
-import CustomerInfoModal from '@/components/RealtimeAgent/Modals/CustomerInfoModal.vue';
 import ContextualInformation from '@/components/ContextualInformation.vue';
 
 // Utils
@@ -318,18 +312,10 @@ const toggleSession = () => {
     if (realtimeStore.isActive) {
         endCall();
     } else {
-        realtimeStore.setShowCustomerModal(true);
+        startCall();
     }
 };
 
-const startWithCustomerInfo = (info: { name: string; company: string }) => {
-    realtimeStore.setCustomerInfo(info);
-    startCall();
-};
-
-const skipCustomerInfo = () => {
-    startCall();
-};
 
 const startCall = async () => {
     let permissions;

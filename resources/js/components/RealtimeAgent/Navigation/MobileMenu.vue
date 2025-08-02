@@ -100,14 +100,14 @@
                 <span class="font-medium">{{ isOverlayMode ? 'ON' : 'OFF' }}</span>
             </button>
 
-            <!-- Call History Link -->
+            <!-- Dashboard Link -->
             <button
                 @click="handleDashboardClick"
                 :disabled="isActive"
                 class="w-full border-t border-gray-100 pt-3 text-left text-xs text-gray-600 dark:border-gray-800 dark:text-gray-400"
                 :class="{ 'cursor-not-allowed opacity-50': isActive }"
             >
-                View Call History →
+                Go to Dashboard →
             </button>
         </div>
     </div>

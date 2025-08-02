@@ -100,7 +100,7 @@
                 class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                 :class="{ 'cursor-not-allowed opacity-50': isActive }"
             >
-                Call History
+                Dashboard
             </button>
             
             <button

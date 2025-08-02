@@ -188,7 +188,7 @@
                     class="text-xs font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                     :class="{ 'cursor-not-allowed opacity-50': isActive }"
                 >
-                    Call History
+                    Dashboard
                 </button>
                 <button
                     @click="toggleSession"
@@ -326,7 +326,7 @@
                     <span class="font-medium">{{ isOverlayMode ? 'ON' : 'OFF' }}</span>
                 </button>
 
-                <!-- Call History Link -->
+                <!-- Dashboard Link -->
                 <button
                     @click="
                         handleDashboardClick();
@@ -336,7 +336,7 @@
                     class="w-full border-t border-gray-100 pt-3 text-left text-xs text-gray-600 dark:border-gray-800 dark:text-gray-400"
                     :class="{ 'cursor-not-allowed opacity-50': isActive }"
                 >
-                    View Call History →
+                    Go to Dashboard →
                 </button>
             </div>
         </div>
@@ -636,49 +636,6 @@
             </div>
         </div>
 
-        <!-- Customer Info Modal -->
-        <div v-if="showCustomerModal" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-            <div class="mx-4 w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                <h2 class="mb-4 text-lg font-semibold">Customer Information (Optional)</h2>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">Customer Name</label>
-                        <input
-                            v-model="customerInfo.name"
-                            type="text"
-                            class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-700"
-                            placeholder="John Smith"
-                        />
-                    </div>
-
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-600 dark:text-gray-400">Company</label>
-                        <input
-                            v-model="customerInfo.company"
-                            type="text"
-                            class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-700"
-                            placeholder="Acme Corp"
-                        />
-                    </div>
-                </div>
-
-                <div class="mt-6 flex gap-3">
-                    <button
-                        @click="startWithCustomerInfo"
-                        class="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-                    >
-                        Start Call
-                    </button>
-                    <button
-                        @click="skipCustomerInfo"
-                        class="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-gray-800 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                    >
-                        Skip
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 </template>
 
@@ -881,12 +838,6 @@ const transcriptQueue: Array<{ speaker: string; text: string; timestamp: number;
 const insightQueue: Array<{ type: string; data: any; timestamp: number }> = [];
 let saveInterval: NodeJS.Timeout | null = null;
 
-// Customer info modal
-const showCustomerModal = ref(false);
-const customerInfo = ref({
-    name: '',
-    company: '',
-});
 
 // Coach dropdown
 const showCoachDropdown = ref(false);
@@ -1079,21 +1030,10 @@ const toggleSession = async () => {
     if (isActive.value) {
         await stopSession();
     } else {
-        // Show customer modal for new sessions
-        showCustomerModal.value = true;
+        await startSession();
     }
 };
 
-const startWithCustomerInfo = async () => {
-    showCustomerModal.value = false;
-    await startSession();
-};
-
-const skipCustomerInfo = async () => {
-    customerInfo.value = { name: '', company: '' };
-    showCustomerModal.value = false;
-    await startSession();
-};
 
 const startSession = async () => {
     try {
@@ -2296,8 +2236,6 @@ const stopSession = async () => {
     isActive.value = false;
     connectionStatus.value = 'disconnected';
 
-    // Reset customer info for next session
-    customerInfo.value = { name: '', company: '' };
 
     // Reset the ending flag after a delay
     setTimeout(() => {
@@ -2332,8 +2270,8 @@ const startConversationSession = async () => {
     try {
         const response = await axios.post('/conversations', {
             template_used: selectedTemplate.value?.name || null,
-            customer_name: customerInfo.value.name || null,
-            customer_company: customerInfo.value.company || null,
+            customer_name: null,
+            customer_company: null,
         });
 
         currentSessionId.value = response.data.session_id;

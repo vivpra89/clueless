@@ -1,7 +1,7 @@
 // NativePHP Extension for Audio Loopback Support
 // This extension provides system audio capture functionality for Electron apps
 
-import { systemPreferences, app, ipcMain, session, desktopCapturer, shell } from 'electron';
+import { systemPreferences, ipcMain, shell } from 'electron';
 
     
 // Store audio loopback state
@@ -12,7 +12,7 @@ const audioLoopbackState = {
 
 export default {
   // Hook into Electron lifecycle - called before app is ready
-  beforeReady: async (app) => {
+  beforeReady: async () => {
     console.log('[Extension] beforeReady hook called');
     
     // Method 1: Try to use electron-audio-loopback package if available
@@ -65,7 +65,7 @@ export default {
     // We don't need to register them here to avoid conflicts
     
     // Microphone permission handlers
-    'check-microphone-permission': async (event) => {
+    'check-microphone-permission': async () => {
       if (process.platform !== 'darwin') {
         return { status: 'authorized' };
       }
@@ -80,7 +80,7 @@ export default {
       }
     },
     
-    'request-microphone-permission': async (event) => {
+    'request-microphone-permission': async () => {
       if (process.platform !== 'darwin') {
         return { granted: true };
       }
@@ -96,7 +96,7 @@ export default {
     },
     
     // Screen capture permission handlers
-    'check-screen-capture-permission': async (event) => {
+    'check-screen-capture-permission': async () => {
       if (process.platform !== 'darwin') {
         return { status: 'authorized' };
       }
@@ -111,7 +111,7 @@ export default {
       }
     },
     
-    'request-screen-capture-permission': async (event) => {
+    'request-screen-capture-permission': async () => {
       if (process.platform !== 'darwin') {
         return { granted: true };
       }
@@ -128,7 +128,7 @@ export default {
     },
     
     // Open privacy settings handler
-    'open-privacy-settings': async (event) => {
+    'open-privacy-settings': async () => {
       console.log('[Extension] IPC handler open-privacy-settings called');
       
       if (process.platform !== 'darwin') {
@@ -145,7 +145,7 @@ export default {
     },
     
     // Test handler to verify IPC is working
-    'test:ping': async (event, ...args) => {
+    'test:ping': async (_event, ...args) => {
       console.log('[Extension Test] IPC handler test:ping called', { args });
       return { 
         success: true, 
@@ -155,7 +155,7 @@ export default {
       };
     },
     
-    'test:echo': async (event, message) => {
+    'test:echo': async (_event, message) => {
       console.log('[Extension Test] IPC handler test:echo called', { message });
       return { 
         success: true, 
@@ -164,7 +164,7 @@ export default {
       };
     },
     
-    'test:get-info': async (event) => {
+    'test:get-info': async () => {
       console.log('[Extension Test] IPC handler test:get-info called');
       return {
         success: true,
