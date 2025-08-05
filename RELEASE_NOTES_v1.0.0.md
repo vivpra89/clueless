@@ -111,4 +111,5 @@ Special thanks to all contributors and testers who helped make this stable relea
 
 **Download**: Available for macOS (Intel and Apple Silicon)  
 **Requirements**: macOS 10.15+, 4GB RAM minimum  
-**License**: MIT with Commons Clause
+**License**: MIT with Commons Clause  
+**Code Signing**: Signed with Apple Developer ID for secure distribution
