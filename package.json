@@ -10,7 +10,8 @@
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
-        "lint": "eslint . --fix"
+        "lint": "eslint . --fix",
+        "postinstall": "node scripts/postinstall.js"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
@@ -55,7 +56,6 @@
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
-        "lightningcss-linux-x64-gnu": "^1.29.1",
-        "node-mac-permissions": "^2.5.0"
+        "lightningcss-linux-x64-gnu": "^1.29.1"
     }
 }
