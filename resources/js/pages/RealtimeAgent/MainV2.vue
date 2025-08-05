@@ -172,6 +172,16 @@ let micStream: MediaStream | null = null;
 let systemStream: MediaStream | null = null;
 let sessionsReady = false;
 
+// Conversation session tracking
+const currentSessionId = ref<number | null>(null);
+const isSavingData = ref(false);
+const transcriptQueue: Array<{ speaker: string; text: string; timestamp: number; groupId?: string; systemCategory?: string }> = [];
+const insightQueue: Array<{ type: string; data: any; timestamp: number }> = [];
+let saveInterval: NodeJS.Timeout | null = null;
+const callStartTime = ref<Date | null>(null);
+const callDurationSeconds = ref(0);
+let durationInterval: NodeJS.Timeout | null = null;
+
 // Tool definitions using SDK
 const coachingTools = [
     tool({
@@ -266,9 +276,23 @@ const coachingTools = [
 
 // Function call handler (same as original)
 const handleFunctionCall = (name: string, args: any) => {
+    const timestamp = Date.now();
+    
     switch (name) {
         case 'track_discussion_topic':
             realtimeStore.trackDiscussionTopic(args.name, args.sentiment, args.context);
+            // Queue for saving
+            if (currentSessionId.value) {
+                insightQueue.push({
+                    type: 'topic',
+                    data: {
+                        name: args.name,
+                        sentiment: args.sentiment,
+                        context: args.context,
+                    },
+                    timestamp: timestamp,
+                });
+            }
             break;
             
         case 'analyze_customer_intent':
@@ -282,20 +306,87 @@ const handleFunctionCall = (name: string, args: any) => {
             
         case 'highlight_insight':
             realtimeStore.addKeyInsight(args.type, args.text, args.importance);
+            // Queue for saving
+            if (currentSessionId.value) {
+                insightQueue.push({
+                    type: 'key_insight',
+                    data: {
+                        type: args.type,
+                        text: args.text,
+                        importance: args.importance,
+                    },
+                    timestamp: timestamp,
+                });
+            }
             break;
             
         case 'detect_commitment':
             realtimeStore.captureCommitment(args.speaker, args.text, args.type, args.deadline);
+            // Queue for saving
+            if (currentSessionId.value) {
+                insightQueue.push({
+                    type: 'commitment',
+                    data: {
+                        speaker: args.speaker,
+                        text: args.text,
+                        type: args.type,
+                        deadline: args.deadline,
+                    },
+                    timestamp: timestamp,
+                });
+            }
             break;
             
         case 'create_action_item':
             realtimeStore.addActionItem(args.text, args.owner, args.type, args.deadline, args.relatedCommitment);
+            // Queue for saving
+            if (currentSessionId.value) {
+                insightQueue.push({
+                    type: 'action_item',
+                    data: {
+                        text: args.text,
+                        owner: args.owner,
+                        type: args.type,
+                        deadline: args.deadline,
+                        relatedCommitment: args.relatedCommitment,
+                    },
+                    timestamp: timestamp,
+                });
+            }
             break;
             
         case 'detect_information_need':
             // Could update conversation context or trigger specific responses
             realtimeStore.setConversationContext(`Customer asking about ${args.topic}: ${args.context}`);
             break;
+    }
+};
+
+// Helper to add system messages and queue them for saving
+const addSystemMessage = (messages: string | string[], systemCategory?: string) => {
+    const timestamp = Date.now();
+    const groupId = `system-${timestamp}`;
+    const messageArray = Array.isArray(messages) ? messages : [messages];
+    
+    realtimeStore.addTranscriptGroup({
+        id: groupId,
+        role: 'system',
+        messages: messageArray.map(text => ({ text, timestamp })),
+        startTime: timestamp,
+        systemCategory,
+    });
+    
+    // Queue for database saving if we have a session
+    if (currentSessionId.value) {
+        messageArray.forEach(text => {
+            transcriptQueue.push({
+                speaker: 'system',
+                text,
+                timestamp,
+                groupId,
+                systemCategory,
+            });
+        });
     }
 };
 
@@ -428,14 +519,11 @@ const startCall = async () => {
         // Auto-enable screen protection during calls
         screenProtection.enableForCall();
         
+        // Start conversation session in database
+        await startConversationSession();
         
         // Add initial system message
-        realtimeStore.addTranscriptGroup({
-            id: `system-${Date.now()}`,
-            role: 'system',
-            messages: [{ text: '📞 Call started', timestamp: Date.now() }],
-            startTime: Date.now(),
-        });
+        addSystemMessage('📞 Call started');
         
     } catch (error) {
         console.error('Failed to start call:', error);
@@ -457,6 +545,28 @@ const startCall = async () => {
 
 const endCall = async () => {
     try {
+        // Save any remaining data before stopping
+        if (currentSessionId.value) {
+            await saveQueuedData(true); // Force save
+            await endConversationSession();
+        }
+        
+        // Clear save interval
+        if (saveInterval) {
+            clearInterval(saveInterval);
+            saveInterval = null;
+        }
+        
+        // Clear duration interval
+        if (durationInterval) {
+            clearInterval(durationInterval);
+            durationInterval = null;
+        }
+        
+        // Reset call tracking
+        callStartTime.value = null;
+        callDurationSeconds.value = 0;
+        
         // Stop microphone stream
         if (micStream) {
             micStream.getTracks().forEach(track => track.stop());
@@ -517,12 +627,7 @@ const endCall = async () => {
         realtimeStore.setConnectionStatus('disconnected');
         
         // Add end message
-        realtimeStore.addTranscriptGroup({
-            id: `system-${Date.now()}`,
-            role: 'system',
-            messages: [{ text: 'Call ended.', timestamp: Date.now() }],
-            startTime: Date.now(),
-        });
+        addSystemMessage('Call ended.');
         
     } catch (error) {
         console.error('Failed to end call:', error);
@@ -694,17 +799,19 @@ const setupSessionHandlers = () => {
     if (salespersonSession.transport) {
         salespersonSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
             if (event.transcript) {
+                const timestamp = Date.now();
+                const groupId = `salesperson-${timestamp}`;
+                
                 // Try to append to last group if same speaker
                 const appended = realtimeStore.appendToLastTranscriptGroup('salesperson', event.transcript);
                 
                 if (!appended) {
                     // Create new group if not appended
-                    const groupId = `salesperson-${Date.now()}`;
                     realtimeStore.addTranscriptGroup({
                         id: groupId,
                         role: 'salesperson',
-                        messages: [{ text: event.transcript, timestamp: Date.now() }],
-                        startTime: Date.now(),
+                        messages: [{ text: event.transcript, timestamp: timestamp }],
+                        startTime: timestamp,
                     });
                 }
                 
@@ -729,17 +836,19 @@ const setupSessionHandlers = () => {
     if (coachSession.transport) {
         coachSession.transport.on('conversation.item.input_audio_transcription.completed', (event: any) => {
             if (event.transcript) {
+                const timestamp = Date.now();
+                const groupId = `customer-${timestamp}`;
+                
                 // Try to append to last group if same speaker
                 const appended = realtimeStore.appendToLastTranscriptGroup('customer', event.transcript);
                 
                 if (!appended) {
                     // Create new group if not appended
-                    const groupId = `customer-${Date.now()}`;
                     realtimeStore.addTranscriptGroup({
                         id: groupId,
                         role: 'customer',
-                        messages: [{ text: event.transcript, timestamp: Date.now() }],
-                        startTime: Date.now(),
+                        messages: [{ text: event.transcript, timestamp: timestamp }],
+                        startTime: timestamp,
                     });
                 }
                 
@@ -1223,6 +1332,101 @@ watch(selectedTemplate, (newTemplate) => {
     }
 });
 
+// Conversation session management functions
+const startConversationSession = async () => {
+    try {
+        const response = await axios.post('/conversations', {
+            template_used: selectedTemplate.value?.name || null,
+            customer_name: realtimeStore.customerInfo.name || null,
+            customer_company: realtimeStore.customerInfo.company || null,
+        });
+
+        currentSessionId.value = response.data.session_id;
+        callStartTime.value = new Date();
+
+        // Start periodic saving
+        saveInterval = setInterval(() => {
+            saveQueuedData();
+        }, 5000); // Save every 5 seconds
+
+        // Start duration timer
+        durationInterval = setInterval(() => {
+            if (realtimeStore.isActive) {
+                callDurationSeconds.value++;
+            }
+        }, 1000);
+
+    } catch (error) {
+        console.error('Failed to start conversation session:', error);
+    }
+};
+
+const endConversationSession = async () => {
+    if (!currentSessionId.value) return;
+
+    try {
+        // Save final state
+        await axios.post(`/conversations/${currentSessionId.value}/end`, {
+            duration_seconds: callDurationSeconds.value,
+            final_intent: realtimeStore.customerIntelligence.intent,
+            final_buying_stage: realtimeStore.customerIntelligence.buyingStage,
+            final_engagement_level: realtimeStore.customerIntelligence.engagementLevel,
+            final_sentiment: realtimeStore.customerIntelligence.sentiment,
+            ai_summary: null, // Could generate a summary here if needed
+        });
+
+        currentSessionId.value = null;
+    } catch (error) {
+        console.error('Failed to end conversation session:', error);
+    }
+};
+
+const saveQueuedData = async (force: boolean = false) => {
+    if (!currentSessionId.value || isSavingData.value) return;
+
+    // Only save if we have data or forced
+    if (!force && transcriptQueue.length === 0 && insightQueue.length === 0) return;
+
+    isSavingData.value = true;
+
+    try {
+        // Save transcripts
+        if (transcriptQueue.length > 0) {
+            const transcriptsToSave = [...transcriptQueue];
+            transcriptQueue.length = 0; // Clear queue
+
+            await axios.post(`/conversations/${currentSessionId.value}/transcripts`, {
+                transcripts: transcriptsToSave.map((t) => ({
+                    speaker: t.speaker,
+                    text: t.text,
+                    spoken_at: t.timestamp,
+                    group_id: t.groupId || null,
+                    system_category: t.systemCategory || null,
+                })),
+            });
+        }
+
+        // Save insights
+        if (insightQueue.length > 0) {
+            const insightsToSave = [...insightQueue];
+            insightQueue.length = 0; // Clear queue
+
+            await axios.post(`/conversations/${currentSessionId.value}/insights`, {
+                insights: insightsToSave.map((i) => ({
+                    insight_type: i.type,
+                    data: i.data,
+                    captured_at: i.timestamp,
+                })),
+            });
+        }
+    } catch (error) {
+        console.error('Failed to save queued data:', error);
+        // Consider re-adding failed items back to queue
+    } finally {
+        isSavingData.value = false;
+    }
+};
+
 // Developer console methods
 const enableMockMode = () => {
     realtimeStore.enableMockMode();
@@ -1241,6 +1445,56 @@ if (typeof window !== 'undefined') {
         disableMockMode,
     };
 }
+
+// Watch for new transcript groups and queue them for saving
+watch(() => realtimeStore.transcriptGroups, (newGroups, oldGroups) => {
+    // Only process if we have a session and groups were added (not removed)
+    if (!currentSessionId.value || !oldGroups) return;
+    
+    // If new groups were added
+    if (newGroups.length > oldGroups.length) {
+        // Process only the new groups
+        const newGroupsAdded = newGroups.slice(oldGroups.length);
+        
+        newGroupsAdded.forEach(group => {
+            // Queue all messages from this group
+            group.messages.forEach(message => {
+                transcriptQueue.push({
+                    speaker: group.role,
+                    text: message.text,
+                    timestamp: message.timestamp,
+                    groupId: group.id,
+                    systemCategory: group.systemCategory,
+                });
+            });
+        });
+    }
+}, { deep: true });
+
+// Watch for changes to existing transcript groups (appended messages)
+watch(() => realtimeStore.transcriptGroups.map(g => g.messages.length), (newLengths, oldLengths) => {
+    if (!currentSessionId.value || !oldLengths) return;
+    
+    // Check each group for new messages
+    newLengths.forEach((newLength, index) => {
+        const oldLength = oldLengths[index] || 0;
+        if (newLength > oldLength) {
+            const group = realtimeStore.transcriptGroups[index];
+            // Queue only the new messages
+            const newMessages = group.messages.slice(oldLength);
+            
+            newMessages.forEach(message => {
+                transcriptQueue.push({
+                    speaker: group.role,
+                    text: message.text,
+                    timestamp: message.timestamp,
+                    groupId: group.id,
+                    systemCategory: group.systemCategory,
+                });
+            });
+        }
+    });
+});
 
 // Lifecycle
 onMounted(() => {
