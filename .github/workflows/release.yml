@@ -43,7 +43,7 @@ jobs:
           echo "Building version: $VERSION"
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -121,7 +121,7 @@ jobs:
           php artisan native:build mac $NATIVEPHP_ARCH
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Clueless-${{ steps.version.outputs.VERSION }}-${{ matrix.arch }}
           path: dist/*.dmg
@@ -144,31 +144,33 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download x64 artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: Clueless-${{ steps.version.outputs.VERSION }}-x64
           path: ./artifacts/x64
 
       - name: Download arm64 artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: Clueless-${{ steps.version.outputs.VERSION }}-arm64
           path: ./artifacts/arm64
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Upload Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.version.outputs.VERSION }}
-          release_name: Clueless v${{ steps.version.outputs.VERSION }}
-          body: |
-            ## 🎉 Clueless v${{ steps.version.outputs.VERSION }}
+        run: |
+          # Find the existing release for v${{ steps.version.outputs.VERSION }}
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/v${{ steps.version.outputs.VERSION }} --jq '.id' || echo "")
+          
+          if [ -z "$RELEASE_ID" ]; then
+            # Create a new release if it doesn't exist
+            gh release create v${{ steps.version.outputs.VERSION }} \
+              --title "Clueless v${{ steps.version.outputs.VERSION }}" \
+              --notes "## 🎉 Clueless v${{ steps.version.outputs.VERSION }}
             
             ### Downloads
-            - 🖥️ **macOS (Apple Silicon)**: `Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg`
-            - 🖥️ **macOS (Intel)**: `Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg`
+            - 🖥️ **macOS (Apple Silicon)**: \`Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg\`
+            - 🖥️ **macOS (Intel)**: \`Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg\`
             
             ### Installation
             1. Download the appropriate DMG file for your Mac
@@ -177,26 +179,12 @@ jobs:
             4. Launch Clueless from Applications
             
             ### What's New
-            See [commits](https://github.com/${{ github.repository }}/commits/v${{ steps.version.outputs.VERSION }}) for details.
-          draft: true
-          prerelease: false
-
-      - name: Upload x64 DMG
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/x64/Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg
-          asset_name: Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg
-          asset_content_type: application/x-apple-diskimage
-
-      - name: Upload arm64 DMG
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/arm64/Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg
-          asset_name: Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg
-          asset_content_type: application/x-apple-diskimage
+            See [commits](https://github.com/${{ github.repository }}/commits/v${{ steps.version.outputs.VERSION }}) for details." \
+              --draft
+          fi
+          
+          # Upload the artifacts
+          gh release upload v${{ steps.version.outputs.VERSION }} \
+            ./artifacts/x64/Clueless-${{ steps.version.outputs.VERSION }}-x64.dmg \
+            ./artifacts/arm64/Clueless-${{ steps.version.outputs.VERSION }}-arm64.dmg \
+            --clobber
