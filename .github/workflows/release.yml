@@ -24,7 +24,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, mbstring, pdo
           tools: composer:v2
           coverage: none
@@ -33,7 +33,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Get version
         id: version
@@ -54,7 +53,11 @@ jobs:
         run: composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
 
       - name: Install NPM dependencies
-        run: npm ci
+        run: |
+          # Workaround for npm optional dependencies bug
+          # https://github.com/npm/cli/issues/4828
+          rm -rf node_modules package-lock.json
+          npm install --omit=dev
 
       - name: Copy .env file
         run: cp .env.example .env
