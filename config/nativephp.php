@@ -83,6 +83,7 @@ return [
         'content',
         'node_modules',
         '*/tests',
+        'public/hot', // Remove Vite hot reload file in production
         // Don't exclude the build directory as it contains our native executable
     ],
 
@@ -153,7 +154,8 @@ return [
      */
     'prebuild' => [
         './build-swift-audio.sh',
-        'npm run build',
+        'npm install --omit=dev', // Install production dependencies
+        'npm run build', // Build frontend assets
         'php artisan optimize',
         'php artisan config:cache',
         'php artisan route:cache',

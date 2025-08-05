@@ -684,7 +684,13 @@ Output priorities:
         ];
 
         foreach ($templates as $template) {
-            Template::create($template);
+            Template::firstOrCreate(
+                [
+                    'name' => $template['name'],
+                    'is_system' => true
+                ],
+                $template
+            );
         }
     }
 }
