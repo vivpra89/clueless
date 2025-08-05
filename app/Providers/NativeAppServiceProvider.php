@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\User;
+use App\Models\Template;
 // use Native\Laravel\Facades\GlobalShortcut;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
@@ -66,8 +66,8 @@ class NativeAppServiceProvider implements ProvidesPhpIni
     protected function seedDatabaseIfNeeded(): void
     {
         try {
-            // Check if users table exists and has data
-            if (Schema::hasTable('users') && User::count() === 0) {
+            // Check if templates table exists and has system templates
+            if (Schema::hasTable('templates') && !Template::where('is_system', true)->exists()) {
                 // Run database seeder for initial data
                 Artisan::call('db:seed', ['--force' => true]);
             }
