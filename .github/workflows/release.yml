@@ -9,6 +9,9 @@ on:
       - '.github/**'
       - '!.github/workflows/release.yml'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build macOS App
