@@ -29,6 +29,10 @@ interface ConversationSession {
     total_action_items: number;
     ai_summary: string | null;
     user_notes: string | null;
+    has_recording: boolean;
+    recording_path: string | null;
+    recording_duration: number | null;
+    recording_size: number | null;
 }
 
 interface Transcript {
@@ -87,6 +91,28 @@ const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+const formatFileSize = (bytes: number) => {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+};
+
+const getRecordingUrl = (recordingPath: string) => {
+    // Convert file path to URL for audio playback
+    // In Electron/NativePHP, we need to handle file:// URLs
+    if (recordingPath.startsWith('/')) {
+        return `file://${recordingPath}`;
+    }
+    return recordingPath;
 };
 
 const getIntentColor = (intent: string) => {
@@ -265,12 +291,36 @@ const deleteConversation = async () => {
                             <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Transcript</h2>
                             <span class="text-xs text-gray-500 dark:text-gray-400"> {{ transcripts.length }} messages </span>
                         </div>
+                        
+                        <!-- Audio Player -->
+                        <div v-if="session.has_recording && session.recording_path" class="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                            <div class="mb-2 flex items-center justify-between">
+                                <h3 class="text-xs font-medium text-gray-700 dark:text-gray-300">Recording</h3>
+                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <span v-if="session.recording_duration">{{ formatDuration(session.recording_duration) }}</span>
+                                    <span v-if="session.recording_size">{{ formatFileSize(session.recording_size) }}</span>
+                                </div>
+                            </div>
+                            <audio
+                                controls
+                                preload="metadata"
+                                class="w-full"
+                                :src="getRecordingUrl(session.recording_path)"
+                            >
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    Your browser does not support the audio element.
+                                </p>
+                            </audio>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Left channel: Salesperson | Right channel: Customer
+                            </p>
+                        </div>
 
                         <div v-if="transcripts.length === 0" class="flex flex-1 items-center justify-center">
                             <p class="text-gray-500 dark:text-gray-400">No transcript available</p>
                         </div>
 
-                        <div v-else class="flex-1 space-y-2 overflow-y-auto" style="min-height: 0; max-height: 600px">
+                        <div v-else class="flex-1 space-y-2 overflow-y-auto" :style="{ 'min-height': '0', 'max-height': session.has_recording ? '500px' : '600px' }">
                             <div
                                 v-for="transcript in transcripts"
                                 :key="transcript.id"

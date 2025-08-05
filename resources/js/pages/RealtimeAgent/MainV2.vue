@@ -13,7 +13,15 @@
             title="Clueless"
             @dashboard-click="handleDashboardClick"
             @toggle-session="toggleSession"
-        />
+        >
+            <template #recording-indicator>
+                <RecordingIndicator 
+                    :is-recording="isRecording"
+                    :duration="recordingDuration"
+                    :show-file-size="false"
+                />
+            </template>
+        </TitleBar>
 
         <!-- Mobile Menu Dropdown -->
         <MobileMenu @dashboard-click="handleDashboardClick" />
@@ -96,8 +104,10 @@ import CommitmentsList from '@/components/RealtimeAgent/Actions/CommitmentsList.
 import PostCallActions from '@/components/RealtimeAgent/Actions/PostCallActions.vue';
 import ContextualInformation from '@/components/ContextualInformation.vue';
 import OnboardingModal from '@/components/RealtimeAgent/OnboardingModal.vue';
+import RecordingIndicator from '@/components/RecordingIndicator.vue';
 
 // Utils
+import { AudioRecorderService } from '@/services/audioRecorder';
 
 
 // Stores
@@ -171,6 +181,14 @@ let audioContext: AudioContext | null = null;
 let micStream: MediaStream | null = null;
 let systemStream: MediaStream | null = null;
 let sessionsReady = false;
+
+// Audio recording
+let audioRecorder: AudioRecorderService | null = null;
+let recordingDurationInterval: NodeJS.Timeout | null = null;
+const isRecordingEnabled = ref(false);
+const isRecording = ref(false);
+const recordingDuration = ref(0);
+const recordingPath = ref('');
 
 // Conversation session tracking
 const currentSessionId = ref<number | null>(null);
@@ -513,6 +531,71 @@ const startCall = async () => {
         // Start audio capture (pass permissions for conditional system audio)
         await startAudioCapture(permissions.screenCapture?.granted || false);
         
+        // Start audio recording if enabled
+        if (isRecordingEnabled.value && window.remote) {
+            try {
+                audioRecorder = new AudioRecorderService({
+                    sampleRate: 24000, // Match the audio context sample rate
+                    channels: 2,
+                    bitDepth: 16
+                });
+                recordingPath.value = await audioRecorder.start();
+                isRecording.value = true;
+                recordingDuration.value = 0;
+                
+                // Start recording duration timer
+                recordingDurationInterval = setInterval(() => {
+                    if (isRecording.value && audioRecorder) {
+                        const status = audioRecorder.getStatus();
+                        recordingDuration.value = status.duration;
+                    }
+                }, 1000);
+                
+                // Add info to transcript
+                realtimeStore.addTranscriptGroup({
+                    id: `system-recording-${Date.now()}`,
+                    role: 'system',
+                    messages: [{
+                        text: '🔴 Recording conversation to: ' + recordingPath.value.split('/').pop(),
+                        timestamp: Date.now()
+                    }],
+                    startTime: Date.now(),
+                    systemCategory: 'info',
+                });
+            } catch (error) {
+                console.error('Failed to start recording:', error);
+                // Clean up any partial state
+                isRecording.value = false;
+                recordingPath.value = '';
+                audioRecorder = null;
+                
+                // Determine error type and provide helpful message
+                let errorMessage = 'Failed to start recording';
+                if (error.message.includes('Invalid recording path')) {
+                    errorMessage = 'Invalid recording path - check file permissions';
+                } else if (error.message.includes('No space left')) {
+                    errorMessage = 'Not enough disk space for recording';
+                } else if (error.message.includes('Permission denied')) {
+                    errorMessage = 'Permission denied - check app file access';
+                } else {
+                    errorMessage = `Failed to start recording: ${error.message}`;
+                }
+                
+                realtimeStore.addTranscriptGroup({
+                    id: `system-recording-error-${Date.now()}`,
+                    role: 'system',
+                    messages: [{
+                        text: `⚠️ ${errorMessage}`,
+                        timestamp: Date.now()
+                    }],
+                    startTime: Date.now(),
+                    systemCategory: 'warning',
+                });
+                
+                // Continue with call even if recording fails
+            }
+        }
+        
         realtimeStore.setActiveState(true);
         realtimeStore.setConnectionStatus('connected');
         
@@ -548,7 +631,7 @@ const endCall = async () => {
         // Save any remaining data before stopping
         if (currentSessionId.value) {
             await saveQueuedData(true); // Force save
-            await endConversationSession();
+            // Don't end conversation session yet - need to save recording first
         }
         
         // Clear save interval
@@ -566,6 +649,92 @@ const endCall = async () => {
         // Reset call tracking
         callStartTime.value = null;
         callDurationSeconds.value = 0;
+        
+        // Stop recording if active
+        if (isRecording.value && audioRecorder) {
+            let recordingInfo = null;
+            try {
+                recordingInfo = await audioRecorder.stop();
+                isRecording.value = false;
+                
+                // Update session with recording info if we have a session
+                if (currentSessionId.value && recordingInfo) {
+                    try {
+                        console.log('Updating recording info for session:', currentSessionId.value, recordingInfo);
+                        const response = await axios.patch(`/conversations/${currentSessionId.value}/recording`, {
+                            has_recording: true,
+                            recording_path: recordingInfo.path,
+                            recording_duration: recordingInfo.duration,
+                            recording_size: recordingInfo.size,
+                        });
+                        console.log('Recording info updated successfully:', response.data);
+                        
+                        // Add success message
+                        realtimeStore.addTranscriptGroup({
+                            id: `system-recording-complete-${Date.now()}`,
+                            role: 'system',
+                            messages: [{
+                                text: `✅ Recording saved (${recordingInfo.duration}s, ${formatFileSize(recordingInfo.size)})`,
+                                timestamp: Date.now()
+                            }],
+                            startTime: Date.now(),
+                            systemCategory: 'info',
+                        });
+                    } catch (error) {
+                        console.error('Failed to update session with recording info:', error);
+                        // Add warning message
+                        realtimeStore.addTranscriptGroup({
+                            id: `system-recording-warning-${Date.now()}`,
+                            role: 'system',
+                            messages: [{
+                                text: `⚠️ Recording saved but failed to link to conversation. File: ${recordingInfo.path.split('/').pop()}`,
+                                timestamp: Date.now()
+                            }],
+                            startTime: Date.now(),
+                            systemCategory: 'warning',
+                        });
+                    }
+                } else if (recordingInfo) {
+                    console.warn('No session ID available to save recording info');
+                    // Still notify user that recording was saved
+                    realtimeStore.addTranscriptGroup({
+                        id: `system-recording-orphaned-${Date.now()}`,
+                        role: 'system',
+                        messages: [{
+                            text: `⚠️ Recording saved but not linked to conversation. File: ${recordingInfo.path.split('/').pop()}`,
+                            timestamp: Date.now()
+                        }],
+                        startTime: Date.now(),
+                        systemCategory: 'warning',
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to stop recording:', error);
+                isRecording.value = false;
+                
+                // Add error message
+                realtimeStore.addTranscriptGroup({
+                    id: `system-recording-stop-error-${Date.now()}`,
+                    role: 'system',
+                    messages: [{
+                        text: `❌ Failed to stop recording properly: ${error.message}. Recording may be corrupted.`,
+                        timestamp: Date.now()
+                    }],
+                    startTime: Date.now(),
+                    systemCategory: 'error',
+                });
+            } finally {
+                // Always clean up resources
+                audioRecorder = null;
+                
+                // Clear recording duration interval
+                if (recordingDurationInterval) {
+                    clearInterval(recordingDurationInterval);
+                    recordingDurationInterval = null;
+                }
+                recordingDuration.value = 0;
+            }
+        }
         
         // Stop microphone stream
         if (micStream) {
@@ -622,6 +791,11 @@ const endCall = async () => {
         
         // Clear from store
         openaiStore.clearAgents();
+        
+        // End conversation session after recording has been saved
+        if (currentSessionId.value) {
+            await endConversationSession();
+        }
         
         realtimeStore.setActiveState(false);
         realtimeStore.setConnectionStatus('disconnected');
@@ -1111,6 +1285,11 @@ const startAudioCapture = async (hasScreenCapturePermission: boolean = false) =>
                 // Convert to PCM16 and send audio
                 const pcm16 = convertFloat32ToPCM16(inputData);
                 
+                // Record audio if enabled (left channel - salesperson)
+                if (isRecording.value && audioRecorder) {
+                    audioRecorder.appendAudio(pcm16, 'left');
+                }
+                
                 // Send to salesperson session
                 if (salespersonSession && salespersonSession.transport) {
                     const base64Audio = arrayBufferToBase64(pcm16.buffer);
@@ -1163,6 +1342,11 @@ const startAudioCapture = async (hasScreenCapturePermission: boolean = false) =>
                         
                         // Convert to PCM16 and send audio
                         const pcm16 = convertFloat32ToPCM16(inputData);
+                        
+                        // Record audio if enabled (right channel - customer)
+                        if (isRecording.value && audioRecorder) {
+                            audioRecorder.appendAudio(pcm16, 'right');
+                        }
                         
                         // Send to coach session
                         if (coachSession && coachSession.transport) {
@@ -1312,6 +1496,17 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     return base64Audio;
 };
 
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
 
 const handleDashboardClick = () => {
     if (!realtimeStore.isActive) {
@@ -1341,8 +1536,10 @@ const startConversationSession = async () => {
             customer_company: realtimeStore.customerInfo.company || null,
         });
 
+        console.log('Started conversation session:', response.data);
         currentSessionId.value = response.data.session_id;
         callStartTime.value = new Date();
+        console.log('Session ID set to:', currentSessionId.value);
 
         // Start periodic saving
         saveInterval = setInterval(() => {
@@ -1499,6 +1696,13 @@ watch(() => realtimeStore.transcriptGroups.map(g => g.messages.length), (newLeng
 // Lifecycle
 onMounted(() => {
     initialize();
+    
+    // Load recording settings
+    const recordingSettings = localStorage.getItem('recordingSettings');
+    if (recordingSettings) {
+        const settings = JSON.parse(recordingSettings);
+        isRecordingEnabled.value = settings.enabled ?? false;
+    }
     
     // Close dropdowns on outside click
     document.addEventListener('click', () => {
