@@ -551,17 +551,7 @@ const startCall = async () => {
                     }
                 }, 1000);
                 
-                // Add info to transcript
-                realtimeStore.addTranscriptGroup({
-                    id: `system-recording-${Date.now()}`,
-                    role: 'system',
-                    messages: [{
-                        text: '🔴 Recording conversation to: ' + recordingPath.value.split('/').pop(),
-                        timestamp: Date.now()
-                    }],
-                    startTime: Date.now(),
-                    systemCategory: 'info',
-                });
+                // Recording started successfully - no need to show in transcript
             } catch (error) {
                 console.error('Failed to start recording:', error);
                 // Clean up any partial state
@@ -669,44 +659,14 @@ const endCall = async () => {
                         });
                         console.log('Recording info updated successfully:', response.data);
                         
-                        // Add success message
-                        realtimeStore.addTranscriptGroup({
-                            id: `system-recording-complete-${Date.now()}`,
-                            role: 'system',
-                            messages: [{
-                                text: `✅ Recording saved (${recordingInfo.duration}s, ${formatFileSize(recordingInfo.size)})`,
-                                timestamp: Date.now()
-                            }],
-                            startTime: Date.now(),
-                            systemCategory: 'info',
-                        });
+                        // Recording saved successfully - no need to show in transcript
                     } catch (error) {
                         console.error('Failed to update session with recording info:', error);
-                        // Add warning message
-                        realtimeStore.addTranscriptGroup({
-                            id: `system-recording-warning-${Date.now()}`,
-                            role: 'system',
-                            messages: [{
-                                text: `⚠️ Recording saved but failed to link to conversation. File: ${recordingInfo.path.split('/').pop()}`,
-                                timestamp: Date.now()
-                            }],
-                            startTime: Date.now(),
-                            systemCategory: 'warning',
-                        });
+                        // Recording saved but not linked - log silently
                     }
                 } else if (recordingInfo) {
                     console.warn('No session ID available to save recording info');
-                    // Still notify user that recording was saved
-                    realtimeStore.addTranscriptGroup({
-                        id: `system-recording-orphaned-${Date.now()}`,
-                        role: 'system',
-                        messages: [{
-                            text: `⚠️ Recording saved but not linked to conversation. File: ${recordingInfo.path.split('/').pop()}`,
-                            timestamp: Date.now()
-                        }],
-                        startTime: Date.now(),
-                        systemCategory: 'warning',
-                    });
+                    // Recording saved but not linked - log silently
                 }
             } catch (error) {
                 console.error('Failed to stop recording:', error);

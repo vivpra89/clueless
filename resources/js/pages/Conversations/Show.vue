@@ -3,6 +3,7 @@ import BaseCard from '@/components/design/BaseCard.vue';
 import PageContainer from '@/components/design/PageContainer.vue';
 import Button from '@/components/ui/button/Button.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import AudioPlayer from '@/components/AudioPlayer.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -293,25 +294,13 @@ const deleteConversation = async () => {
                         </div>
                         
                         <!-- Audio Player -->
-                        <div v-if="session.has_recording && session.recording_path" class="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                            <div class="mb-2 flex items-center justify-between">
-                                <h3 class="text-xs font-medium text-gray-700 dark:text-gray-300">Recording</h3>
-                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                    <span v-if="session.recording_duration">{{ formatDuration(session.recording_duration) }}</span>
-                                    <span v-if="session.recording_size">{{ formatFileSize(session.recording_size) }}</span>
-                                </div>
-                            </div>
-                            <audio
-                                controls
-                                preload="metadata"
-                                class="w-full"
+                        <div v-if="session.has_recording && session.recording_path" class="mb-4">
+                            <AudioPlayer
                                 :src="getRecordingUrl(session.recording_path)"
-                            >
-                                <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    Your browser does not support the audio element.
-                                </p>
-                            </audio>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                :duration="session.recording_duration || 0"
+                                :size="session.recording_size || 0"
+                            />
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                                 Left channel: Salesperson | Right channel: Customer
                             </p>
                         </div>
