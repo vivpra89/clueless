@@ -26,10 +26,12 @@ export interface CustomerIntelligence {
 
 export interface Insight {
     id: string;
-    type: 'pain_point' | 'objection' | 'positive_signal' | 'concern' | 'question';
+    type: 'pain_point' | 'objection' | 'positive_signal' | 'concern' | 'question' | 'question_with_answer';
     text: string;
     importance: 'high' | 'medium' | 'low';
     timestamp: number;
+    answer?: string;
+    question?: string;
 }
 
 export interface Topic {

@@ -53,7 +53,7 @@
                             :class="{ 'bg-blue-100': selectedTemplate?.id === template.id }"
                         >
                             <div class="pointer-events-none flex items-center gap-2">
-                                <span class="text-xs">{{ getIconEmoji(template.icon) }}</span>
+                                <span class="text-xs">{{ getIconEmoji(template.category) }}</span>
                                 <p class="text-xs text-gray-900 dark:text-gray-100">{{ template.name }}</p>
                             </div>
                         </button>
@@ -192,6 +192,8 @@ const getIconEmoji = (icon?: string) => {
         'feedback': '💭',
         'renewal': '🔄',
         'upsell': '📈',
+        'coding_coach': '💻',
+        'ml_theory': '🧠',
         'default': '📋'
     };
     

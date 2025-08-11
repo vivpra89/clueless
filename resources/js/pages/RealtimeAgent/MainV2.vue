@@ -32,34 +32,31 @@
 
                 <!-- Column 2: Real-time Intelligence -->
                 <div class="flex flex-col gap-3">
-                    <!-- Customer Intelligence Card -->
+                    <!-- Interview Rating Card -->
                     <CustomerIntelligence class="flex-shrink-0" />
 
                     <!-- Key Insights Card -->
                     <KeyInsights class="min-h-[200px] flex-1 lg:min-h-0" />
-
-                    <!-- Post-Call Actions Card (moved from column 3) -->
-                    <PostCallActions class="min-h-[150px] flex-1 lg:min-h-0" />
-
-                    <!-- Talking Points Card -->
-                    <TalkingPoints class="flex-shrink-0" />
                 </div>
 
-                <!-- Column 3: Contextual & Actions -->
+                <!-- Column 3: LLM Tools -->
                 <div class="flex flex-col gap-3">
-                    <!-- Contextual Information Card (50%) -->
-                    <ContextualInformation
-                        :prompt="selectedTemplate?.prompt || ''"
+                    <!-- LLM Prompt Card -->
+                    <LLMPrompt 
+                        class="min-h-[120px] flex-shrink-0 lg:min-h-0"
                         :conversation-context="conversationContext"
                         :last-customer-message="lastCustomerMessage"
-                        class="min-h-[250px] flex-[5] lg:min-h-0"
+                        :selected-template="selectedTemplate"
+                        @llm-response="handleLLMResponse"
                     />
 
-                    <!-- Commitments Made Card (30%) -->
-                    <CommitmentsList class="min-h-[150px] flex-[3] lg:min-h-0" />
-
-                    <!-- Discussion Topics Card (20%) -->
-                    <DiscussionTopics class="min-h-[120px] flex-[2] lg:min-h-0" />
+                    <!-- LLM Insights Card -->
+                    <TalkingPoints 
+                        class="flex-1 lg:min-h-0"
+                        :llm-responses="llmResponses"
+                        @remove-response="removeLLMResponse"
+                        @clear-responses="clearLLMResponses"
+                    />
                 </div>
             </div>
         </div>
@@ -90,11 +87,8 @@ import MobileMenu from '@/components/RealtimeAgent/Navigation/MobileMenu.vue';
 import LiveTranscription from '@/components/RealtimeAgent/Content/LiveTranscription.vue';
 import CustomerIntelligence from '@/components/RealtimeAgent/Content/CustomerIntelligence.vue';
 import KeyInsights from '@/components/RealtimeAgent/Content/KeyInsights.vue';
-import DiscussionTopics from '@/components/RealtimeAgent/Content/DiscussionTopics.vue';
 import TalkingPoints from '@/components/RealtimeAgent/Content/TalkingPoints.vue';
-import CommitmentsList from '@/components/RealtimeAgent/Actions/CommitmentsList.vue';
-import PostCallActions from '@/components/RealtimeAgent/Actions/PostCallActions.vue';
-import ContextualInformation from '@/components/ContextualInformation.vue';
+import LLMPrompt from '@/components/RealtimeAgent/Actions/LLMPrompt.vue';
 import OnboardingModal from '@/components/RealtimeAgent/OnboardingModal.vue';
 
 // Utils
@@ -119,6 +113,13 @@ const showOnboardingModal = ref(false);
 const hasApiKey = ref(false);
 const hasMicPermission = ref(false);
 const hasScreenPermission = ref(false);
+
+// LLM Responses
+const llmResponses = ref<Array<{
+    prompt: string;
+    response: string;
+    timestamp: Date;
+}>>([]);
 
 // Composables
 const overlayMode = useOverlayMode();
@@ -1317,6 +1318,28 @@ const handleDashboardClick = () => {
     if (!realtimeStore.isActive) {
         router.visit('/conversations');
     }
+};
+
+// LLM Response handlers
+const handleLLMResponse = (prompt: string, response: string, timestamp: Date) => {
+    llmResponses.value.push({
+        prompt,
+        response,
+        timestamp
+    });
+    
+    // Keep only last 20 responses to prevent memory issues
+    if (llmResponses.value.length > 20) {
+        llmResponses.value = llmResponses.value.slice(-20);
+    }
+};
+
+const removeLLMResponse = (index: number) => {
+    llmResponses.value.splice(index, 1);
+};
+
+const clearLLMResponses = () => {
+    llmResponses.value = [];
 };
 
 // Watch for template changes

@@ -53,7 +53,7 @@
                     }"
                 >
                     <div class="flex items-center gap-2">
-                        <span class="text-sm">{{ getIconEmoji(template.icon) }}</span>
+                        <span class="text-sm">{{ getIconEmoji(template.category) }}</span>
                         <p class="text-xs text-gray-900 dark:text-gray-100">{{ template.name }}</p>
                     </div>
                 </div>
@@ -199,6 +199,8 @@ const getIconEmoji = (icon?: string) => {
         'feedback': '💭',
         'renewal': '🔄',
         'upsell': '📈',
+        'coding_coach': '💻',
+        'ml_theory': '🧠',
         'default': '📋'
     };
     

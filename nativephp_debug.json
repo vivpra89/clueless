@@ -1,0 +1,47 @@
+{
+    "Environment": {
+        "PHP": {
+            "Version": "8.4.11",
+            "Path": "/opt/homebrew/Cellar/php/8.4.11/bin/php"
+        },
+        "Laravel": {
+            "Version": "12.20.0",
+            "ConfigCached": true,
+            "RoutesCached": true,
+            "DebugEnabled": true
+        },
+        "Node": {
+            "Version": "v23.9.0",
+            "Path": "/opt/homebrew/bin/node"
+        },
+        "NPM": {
+            "Version": "10.9.2",
+            "Path": "/opt/homebrew/bin/npm"
+        },
+        "OperatingSystem": "Darwin"
+    },
+    "NativePHP": {
+        "Versions": {
+            "nativephp/electron": "dev-main",
+            "nativephp/laravel": "1.1.2.0",
+            "nativephp/php-bin": "1.0.3.0"
+        },
+        "Configuration": {
+            "Provider": "App\\Providers\\NativeAppServiceProvider",
+            "BuildHooks": {
+                "Pre": [
+                    "./build-swift-audio.sh",
+                    "npm install --omit=dev",
+                    "npm run build",
+                    "php artisan optimize",
+                    "php artisan config:cache",
+                    "php artisan route:cache",
+                    "php artisan view:cache"
+                ],
+                "Post": []
+            },
+            "NotarizationEnabled": false,
+            "CustomPHPBinary": false
+        }
+    }
+}

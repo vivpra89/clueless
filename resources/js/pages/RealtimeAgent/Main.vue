@@ -572,63 +572,43 @@
                         />
                     </div>
 
-                    <!-- Commitments Made Card -->
+
+                    <!-- LLM Prompt Card -->
                     <div
                         class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                         style="min-height: 200px"
                     >
-                        <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Commitments Made</h3>
+                        <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">LLM Prompt</h3>
 
-                        <div v-if="commitments.length === 0" class="text-xs text-gray-600 dark:text-gray-400">No commitments captured yet...</div>
-
-                        <div v-else class="omega-scrollbar max-h-48 space-y-1.5 overflow-y-auto">
-                            <div v-for="commitment in commitments" :key="commitment.id" class="flex items-start gap-2 py-2 text-xs">
-                                <div class="flex items-start gap-2">
-                                    <span
-                                        :class="[
-                                            'mt-1 h-2 w-2 flex-shrink-0 rounded-full',
-                                            commitment.speaker === 'salesperson' ? 'bg-green-500' : 'bg-gray-400',
-                                        ]"
-                                    ></span>
-                                    <div class="flex-1">
-                                        <span
-                                            :class="[
-                                                'font-medium',
-                                                commitment.speaker === 'salesperson'
-                                                    ? 'text-gray-900 dark:text-gray-100'
-                                                    : 'text-gray-900 dark:text-gray-100',
-                                            ]"
-                                        >
-                                            {{ commitment.speaker === 'salesperson' ? 'You:' : 'Customer:' }}
-                                        </span>
-                                        <span class="ml-1 text-gray-600 dark:text-gray-400">{{ commitment.text }}</span>
-                                        <span v-if="commitment.deadline" class="ml-1 text-gray-600 dark:text-gray-400">
-                                            ({{ commitment.deadline }})
-                                        </span>
-                                    </div>
-                                </div>
+                        <!-- Input Section -->
+                        <div class="mb-3">
+                            <div class="flex gap-2">
+                                <textarea
+                                    v-model="llmPromptText"
+                                    placeholder="Ask the LLM anything about the conversation..."
+                                    class="flex-1 resize-none rounded border border-gray-200 bg-white px-3 py-2 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                                    rows="3"
+                                    @keydown.ctrl.enter="sendLLMPrompt"
+                                ></textarea>
+                                <button
+                                    @click="sendLLMPrompt"
+                                    :disabled="!llmPromptText.trim() || isLLMProcessing"
+                                    class="flex-shrink-0 rounded bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-900"
+                                >
+                                    <span v-if="isLLMProcessing">Processing...</span>
+                                    <span v-else>Send</span>
+                                </button>
                             </div>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Press Ctrl+Enter to send
+                            </p>
                         </div>
-                    </div>
 
-                    <!-- Post-Call Actions Card -->
-                    <div
-                        class="flex flex-col rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-                        style="min-height: 200px"
-                    >
-                        <h3 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Post-Call Actions</h3>
-
-                        <div v-if="actionItems.length === 0" class="text-xs text-gray-600 dark:text-gray-400">Action items will appear here...</div>
-
-                        <div v-else class="omega-scrollbar max-h-48 space-y-1.5 overflow-y-auto">
-                            <div v-for="item in actionItems" :key="item.id" class="flex items-start gap-2 py-2">
-                                <div class="flex items-start gap-2">
-                                    <input type="checkbox" v-model="item.completed" class="omega-border mt-0.5 rounded" />
-                                    <label class="flex-1 text-xs text-gray-900 dark:text-gray-100">
-                                        {{ item.text }}
-                                        <span v-if="item.deadline" class="text-gray-600 dark:text-gray-400"> - Due: {{ item.deadline }} </span>
-                                    </label>
-                                </div>
+                        <!-- Processing Indicator -->
+                        <div v-if="isLLMProcessing" class="border-t border-gray-200 pt-3 dark:border-gray-700">
+                            <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                <div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
+                                <span>Processing your request...</span>
                             </div>
                         </div>
                     </div>
@@ -2372,8 +2352,8 @@ const fetchTemplates = async () => {
         // Select default template if none selected
         if (!selectedTemplate.value) {
             if (templates.value.length > 0) {
-                // Try to find the Sales Discovery Call template as default, otherwise use first available template
-                const defaultTemplate = templates.value.find((t) => t.name === 'Sales Discovery Call') || templates.value[0];
+                // Use the first available template as default
+                const defaultTemplate = templates.value[0];
                 if (defaultTemplate) {
                     selectedTemplate.value = defaultTemplate;
                 }
@@ -2590,6 +2570,80 @@ onMounted(async () => {
 onUnmounted(() => {
     stopSession();
 });
+
+// LLM Prompt
+const llmPromptText = ref('');
+const isLLMProcessing = ref(false);
+
+const sendLLMPrompt = async () => {
+    if (!llmPromptText.value.trim() || isLLMProcessing.value) return;
+
+    const prompt = llmPromptText.value.trim();
+    isLLMProcessing.value = true;
+
+    try {
+        // Build context for the LLM
+        const context = buildLLMContext(prompt);
+        
+        // Call OpenAI API
+        const response = await callOpenAI(context);
+        
+        // Clear input
+        llmPromptText.value = '';
+        
+        // You can add the response to a store or emit an event here if needed
+        console.log('LLM Response:', response);
+    } catch (error) {
+        console.error('LLM Error:', error);
+    } finally {
+        isLLMProcessing.value = false;
+    }
+};
+
+const buildLLMContext = (prompt: string) => {
+    let context = `You are an AI assistant helping with a sales conversation. Please provide a helpful, concise response to the following question:\n\nQuestion: ${prompt}\n\n`;
+    
+    if (conversationContext.value) {
+        context += `Conversation Context: ${conversationContext.value}\n\n`;
+    }
+    
+    if (lastCustomerMessage.value) {
+        context += `Last Customer Message: "${lastCustomerMessage.value}"\n\n`;
+    }
+    
+    if (selectedTemplate.value?.prompt) {
+        context += `Sales Template Context: ${selectedTemplate.value.prompt}\n\n`;
+    }
+    
+    context += `Please provide a clear, actionable response that helps the salesperson understand or act on the information requested.`;
+    
+    return context;
+};
+
+const callOpenAI = async (context: string) => {
+    try {
+        const response = await axios.post('/api/openai/chat', {
+            messages: [
+                {
+                    role: 'user',
+                    content: context
+                }
+            ],
+            model: 'gpt-4o-mini',
+            max_tokens: 500,
+            temperature: 0.7
+        });
+
+        if (response.data && response.data.choices && response.data.choices[0]) {
+            return response.data.choices[0].message.content;
+        } else {
+            throw new Error('Invalid response format from OpenAI');
+        }
+    } catch (error) {
+        console.error('OpenAI API Error:', error);
+        throw new Error('Failed to get response from OpenAI API');
+    }
+};
 </script>
 
 <style scoped>

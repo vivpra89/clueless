@@ -36,14 +36,11 @@ Route::get('/audio-test', [\App\Http\Controllers\AudioTestController::class, 'in
 Route::post('/api/realtime/ephemeral-key', [\App\Http\Controllers\RealtimeController::class, 'generateEphemeralKey'])
     ->name('realtime.ephemeral-key');
 
-// API Key Status Route
-Route::get('/api/openai/status', function () {
-    $apiKeyService = app(\App\Services\ApiKeyService::class);
-
-    return response()->json([
-        'hasApiKey' => $apiKeyService->hasApiKey(),
-    ]);
-})->name('api.openai.status');
+// OpenAI API Routes
+Route::post('/api/openai/chat', [\App\Http\Controllers\OpenAIController::class, 'chat'])
+    ->name('api.openai.chat');
+Route::get('/api/openai/status', [\App\Http\Controllers\OpenAIController::class, 'status'])
+    ->name('api.openai.status');
 
 // Open external URL in default browser (for NativePHP)
 Route::post('/api/open-external', function (\Illuminate\Http\Request $request) {

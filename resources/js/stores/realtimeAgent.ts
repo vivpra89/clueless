@@ -9,16 +9,14 @@ import type {
     Topic, 
     TranscriptGroup 
 } from '@/types/realtimeAgent';
-import { mockRealtimeDataService } from '@/services/mockRealtimeData';
-import type { CustomerInsight, ContextualCoaching } from '@/types/realtime';
 
 export const useRealtimeAgentStore = defineStore('realtimeAgent', {
     state: () => ({
         // Connection
         connectionStatus: 'disconnected' as 'disconnected' | 'connecting' | 'connected',
         isActive: false,
-        isMockMode: false,
-        mockInterval: null as NodeJS.Timeout | null,
+        // isMockMode: false, // Removed mock mode
+        // mockInterval: null as NodeJS.Timeout | null, // Removed mock interval
         
         // Templates
         selectedTemplate: null as Template | null,
@@ -42,7 +40,7 @@ export const useRealtimeAgentStore = defineStore('realtimeAgent', {
         actionItems: [] as ActionItem[],
         
         // Coaching
-        coachingItems: [] as ContextualCoaching[],
+        coachingItems: [] as any[], // Changed from ContextualCoaching to any[]
         
         // UI State
         coveredPoints: [] as number[],
@@ -103,6 +101,16 @@ export const useRealtimeAgentStore = defineStore('realtimeAgent', {
         
         setTemplates(templates: Template[]) {
             this.templates = templates;
+        },
+
+        clearTemplates() {
+            this.templates = [];
+        },
+
+        forceClearMockData() {
+            // this.isMockMode = false; // Removed mock mode
+            this.templates = [];
+            this.resetSession();
         },
         
         // Transcript Actions
@@ -193,6 +201,23 @@ export const useRealtimeAgentStore = defineStore('realtimeAgent', {
                 this.insights.pop();
             }
         },
+
+        addQuestionWithAnswer(question: string, answer: string, importance: string = 'medium') {
+            this.insights.unshift({
+                id: `question-${Date.now()}`,
+                type: 'question_with_answer',
+                text: `${question} → ${answer}`,
+                importance: importance as any,
+                timestamp: Date.now(),
+                question,
+                answer,
+            });
+            
+            // Keep only last 20 insights
+            if (this.insights.length > 20) {
+                this.insights.pop();
+            }
+        },
         
         // Commitment Actions
         captureCommitment(speaker: string, text: string, type: string, deadline?: string) {
@@ -272,7 +297,7 @@ export const useRealtimeAgentStore = defineStore('realtimeAgent', {
         },
         
         // Coaching Actions
-        addCoachingItem(coaching: ContextualCoaching) {
+        addCoachingItem(coaching: any) { // Changed from ContextualCoaching to any
             this.coachingItems.unshift(coaching);
             // Keep only last 10 coaching items
             if (this.coachingItems.length > 10) {
@@ -308,117 +333,8 @@ export const useRealtimeAgentStore = defineStore('realtimeAgent', {
             this.lastCustomerMessage = '';
         },
         
-        // Mock Data Actions
-        enableMockMode() {
-            this.isMockMode = true;
-            this.resetSession();
-            
-            // Load all mock data at once
-            const mockData = mockRealtimeDataService.getAllMockData();
-            
-            // Set connection status
-            this.connectionStatus = 'connected';
-            this.isActive = true;
-            
-            // Set customer info
-            this.customerInfo = {
-                name: mockData.customerProfile.name,
-                company: mockData.customerProfile.company,
-            };
-            
-            // Load transcripts
-            mockData.transcripts.forEach(transcript => {
-                this.addTranscriptGroup(transcript);
-            });
-            
-            // Load insights
-            mockData.insights.forEach(insight => {
-                this.addKeyInsight(
-                    insight.type,
-                    insight.content,
-                    insight.confidence > 0.9 ? 'high' : insight.confidence > 0.7 ? 'medium' : 'low'
-                );
-            });
-            
-            // Update customer intelligence
-            this.updateCustomerIntelligence({
-                intent: 'evaluation',
-                buyingStage: 'Discovery',
-                engagementLevel: mockData.metrics.engagementScore,
-                sentiment: mockData.metrics.sentiment,
-            });
-            
-            // Add some topics
-            this.trackDiscussionTopic('Integration Issues', 'negative', 'Systems don\'t talk to each other');
-            this.trackDiscussionTopic('Manual Data Entry', 'negative', 'Spending hours on manual work');
-            this.trackDiscussionTopic('Automation Platform', 'positive', 'Interested in our solution');
-            this.trackDiscussionTopic('Demo Scheduled', 'positive', 'Thursday 2 PM demo');
-            
-            // Add action items
-            this.addActionItem('Send proposal and demo invite', 'salesperson', 'followup', 'Today');
-            this.addActionItem('Include Sarah Chen (CTO) in demo', 'salesperson', 'meeting');
-            this.addActionItem('Include Mike Johnson (Operations) in demo', 'salesperson', 'meeting');
-            
-            // Add commitments
-            this.captureCommitment('salesperson', 'Send detailed proposal today', 'deadline', 'Today');
-            this.captureCommitment('salesperson', 'Schedule 30-minute demo for Thursday 2 PM', 'meeting', 'Thursday');
-            this.captureCommitment('customer', 'Review proposal with team', 'review');
-            
-            // Add coaching items
-            mockData.coaching.forEach(coaching => {
-                this.addCoachingItem(coaching);
-            });
-        },
-        
-        disableMockMode() {
-            this.isMockMode = false;
-            if (this.mockInterval) {
-                mockRealtimeDataService.stopMockConversation();
-                this.mockInterval = null;
-            }
-            this.resetSession();
-        },
-        
-        startMockSimulation() {
-            if (!this.isMockMode) return;
-            
-            this.resetSession();
-            this.connectionStatus = 'connected';
-            this.isActive = true;
-            
-            mockRealtimeDataService.startMockConversation((update) => {
-                switch (update.type) {
-                    case 'transcript':
-                        const group: TranscriptGroup = {
-                            id: `group-${Date.now()}`,
-                            role: update.data.role,
-                            messages: update.data.messages.map((text: string, index: number) => ({
-                                id: `msg-${Date.now()}-${index}`,
-                                text,
-                                timestamp: update.data.timestamp,
-                            })),
-                            startTime: update.data.timestamp,
-                            endTime: update.data.timestamp + 1000,
-                        };
-                        this.addTranscriptGroup(group);
-                        break;
-                        
-                    case 'insight':
-                        const insight = update.data as CustomerInsight;
-                        this.addKeyInsight(
-                            insight.type,
-                            insight.content,
-                            insight.confidence > 0.9 ? 'high' : 'medium'
-                        );
-                        break;
-                        
-                    case 'metrics':
-                        this.updateCustomerIntelligence({
-                            engagementLevel: Math.max(0, Math.min(100, update.data.engagementScore)),
-                        });
-                        break;
-                }
-            });
-        },
+        // Mock Data Actions - REMOVED
+        // enableMockMode, disableMockMode, and startMockSimulation methods removed
+        // as they were causing duplicate template issues
     },
 });
